@@ -41,5 +41,10 @@ jobs:
           docker build -t $REGISTRY/$REPO:$TAG .
           docker push $REGISTRY/$REPO:$TAG
 
-      - name: Trigger App Runner deployment
-        run: aws apprunner start-deployment --service-arn ${{ secrets.APPRUNNER_SERVICE_ARN }}
+      - name: Deploy to ECS Express
+        uses: aws-actions/amazon-ecs-deploy-express-service@v1
+        with:
+          service-name: todo-app
+          image: ${{ steps.ecr-login.outputs.registry }}/todo-app:${{ github.sha }}
+          execution-role-arn: ${{ secrets.ECS_EXECUTION_ROLE_ARN }}
+          infrastructure-role-arn: ${{ secrets.ECS_INFRASTRUCTURE_ROLE_ARN }}
