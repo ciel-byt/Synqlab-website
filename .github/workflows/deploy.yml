@@ -48,3 +48,4 @@ jobs:
           image: ${{ steps.ecr-login.outputs.registry }}/todo-app:${{ github.sha }}
           execution-role-arn: ${{ secrets.ECS_EXECUTION_ROLE_ARN }}
           infrastructure-role-arn: ${{ secrets.ECS_INFRASTRUCTURE_ROLE_ARN }}
+          container-port: 8000
