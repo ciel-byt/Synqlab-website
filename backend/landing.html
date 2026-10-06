@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SynqLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* Bone & Ink — warm light system */
+    --paper:#f4f0e8;          /* base bone */
+    --paper-2:#efeae0;        /* raised panel */
+    --paper-3:#e9e3d6;        /* deep panel */
+    --card:#faf7f1;           /* lifted card */
+    --ink:#17170f;            /* near-black warm */
+    --ink-soft:#3d3b31;
+    --ink-mute:#6d6a5c;
+    --ink-faint:#9c9789;
+    --line:rgba(23,23,15,0.12);
+    --line-2:rgba(23,23,15,0.20);
+    /* single deep accent: pine */
+    --pine:#1f4d3d;
+    --pine-2:#163b2e;
+    --pine-bright:#2f6d55;
+    --oxblood:#7b2d26;        /* rare secondary highlight only */
+
+    --serif:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'Inter',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); background:var(--paper); color:var(--ink);
+    -webkit-font-smoothing:antialiased; overflow:hidden; position:relative;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--pine);color:var(--paper)}
+  .serif{font-family:var(--serif)}
+  .mono{font-family:var(--mono)}
+  .accent{color:var(--pine)}
+
+  /* faint blueprint grid */
+  .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(31,77,61,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(31,77,61,0.05) 1px,transparent 1px);
+    background-size:72px 72px;
+    mask-image:radial-gradient(ellipse 100% 90% at 50% 40%,#000 55%,transparent 100%)}
+
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--pine);display:inline-flex;align-items:center;gap:11px}
+  .kicker::before{content:'';width:26px;height:1px;background:var(--pine);opacity:.7}
+
+  /* shell */
+  .shell{position:relative;z-index:2;height:100vh;display:flex;flex-direction:column;padding:0 clamp(22px,4.5vw,72px)}
+
+  header{display:flex;align-items:center;justify-content:space-between;height:82px;flex-shrink:0;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:19px;letter-spacing:-.01em}
+  .mark{width:28px;height:28px;border:1.5px solid var(--ink);border-radius:7px;position:relative;display:grid;place-items:center}
+  .mark::after{content:'';position:absolute;inset:6px;border:1.5px solid var(--pine);border-radius:3px;border-right-color:transparent;border-bottom-color:transparent;transform:rotate(45deg)}
+
+  /* editorial tab rail */
+  .tabs{display:flex;gap:34px;align-items:center}
+  .tab{font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;color:var(--ink-mute);cursor:pointer;background:none;border:none;padding:6px 0;position:relative;transition:color .2s}
+  .tab .tn{color:var(--ink-faint);margin-right:9px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--ink)}
+  .tab.active .tn{color:var(--pine)}
+  .tab::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--pine);transform:scaleX(0);transform-origin:left;transition:transform .28s ease}
+  .tab.active::after{transform:scaleX(1)}
+  @media(max-width:900px){.tabs{gap:18px}.tab .tn{display:none}}
+
+  .btn{font-family:var(--sans);font-size:14px;font-weight:600;padding:11px 22px;border-radius:8px;cursor:pointer;border:1px solid var(--ink);transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+  .btn-solid{background:var(--ink);color:var(--paper)}
+  .btn-solid:hover{background:var(--pine);border-color:var(--pine)}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-lg{padding:14px 28px;font-size:15px}
+
+  /* stage */
+  .stage{flex:1;position:relative;min-height:0}
+  .view{position:absolute;inset:0;display:flex;align-items:center;opacity:0;pointer-events:none;transform:translateX(24px);transition:opacity .45s ease,transform .45s ease}
+  .view.active{opacity:1;pointer-events:auto;transform:none}
+
+  /* footer meta */
+  .foot{height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.06em}
+  .foot .stepline{display:flex;gap:10px;align-items:center}
+  .stepnum{color:var(--ink-mute)}
+  .stepnum b{color:var(--pine)}
+
+  /* ============ HOME ============ */
+  .home-wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center;width:100%}
+  @media(max-width:960px){.home-wrap{grid-template-columns:1fr;gap:32px}}
+  .home h1{font-family:var(--serif);font-weight:400;font-size:clamp(44px,6.4vw,96px);line-height:.98;letter-spacing:-.02em;margin:24px 0 26px}
+  .home h1 em{font-style:italic;color:var(--pine)}
+  .home .lead{font-size:clamp(16px,1.4vw,19px);color:var(--ink-soft);max-width:500px;line-height:1.6;margin-bottom:34px}
+  .home .cta{display:flex;gap:14px;flex-wrap:wrap}
+  /* line-art loop diagram */
+  .diagram{position:relative;width:min(52vh,470px);height:min(52vh,470px);margin:0 auto}
+  .diagram svg{width:100%;height:100%;overflow:visible}
+  .dg-ring{fill:none;stroke:var(--line-2);stroke-width:1}
+  .dg-rot{fill:none;stroke:var(--pine);stroke-width:1.25;stroke-dasharray:3 8;opacity:.55;transform-origin:center;animation:spin 44s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .dg-node circle{fill:var(--paper);stroke:var(--ink);stroke-width:1.25}
+  .dg-node text{font-family:var(--mono);font-size:5px;fill:var(--ink-mute);text-anchor:middle;dominant-baseline:middle}
+  .dg-core{fill:var(--pine)}
+  .dg-core-t{font-family:var(--mono);font-size:4.6px;fill:var(--paper);text-anchor:middle;dominant-baseline:middle;letter-spacing:.5px}
+
+  /* ============ LOOP ============ */
+  .loop-wrap{display:grid;grid-template-columns:.95fr 1.05fr;gap:56px;align-items:center;width:100%}
+  @media(max-width:960px){.loop-wrap{grid-template-columns:1fr;gap:24px}}
+  .orbit{position:relative;width:min(48vh,430px);height:min(48vh,430px);margin:0 auto}
+  .orbit svg{position:absolute;inset:0;width:100%;height:100%}
+  .orbit-ring{fill:none;stroke:var(--line-2);stroke-width:1}
+  .orbit-prog{fill:none;stroke:var(--pine);stroke-width:1.5;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+  .onode{position:absolute;transform:translate(-50%,-50%);cursor:pointer;text-align:center}
+  .onode .ring{width:50px;height:50px;border-radius:50%;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:var(--ink-mute);transition:all .25s}
+  .onode:hover .ring,.onode.sel .ring{border-color:var(--pine);background:var(--pine);color:var(--paper);transform:scale(1.1)}
+  .onode .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-faint);margin-top:8px;text-transform:uppercase}
+  .onode.sel .lbl{color:var(--pine)}
+  .orbit-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46%;text-align:center}
+  .orbit-center .oc-n{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.1em}
+  .orbit-center .oc-t{font-family:var(--serif);font-size:24px;margin-top:2px}
+  .loop-detail .kicker{margin-bottom:18px}
+  .loop-detail h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.6vw,52px);line-height:1.02;letter-spacing:-.02em;margin-bottom:16px}
+  .loop-detail .ld-body{font-size:16.5px;color:var(--ink-soft);line-height:1.62;min-height:80px;max-width:440px}
+  .ld-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .chip{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);padding:7px 13px;border:1px solid var(--line-2);border-radius:6px;background:var(--card)}
+
+  /* ============ TEAM ============ */
+  .team-wrap{width:100%;display:grid;grid-template-columns:1fr 1.1fr;gap:52px;align-items:center}
+  @media(max-width:960px){.team-wrap{grid-template-columns:1fr;gap:24px}}
+  .agent-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+  .agent-row{display:flex;align-items:center;gap:15px;padding:16px 8px;border-bottom:1px solid var(--line);cursor:pointer;transition:all .2s;position:relative}
+  .agent-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--pine);transform:scaleY(0);transition:transform .25s}
+  .agent-row:hover{padding-left:14px}
+  .agent-row.sel::before{transform:scaleY(1)}
+  .agent-row.sel{padding-left:14px}
+  .agent-row .idx{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:22px}
+  .agent-row .nm{font-family:var(--serif);font-size:19px}
+  .agent-row .rl{font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+  .agent-row .st{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line-2);padding:3px 9px;border-radius:20px}
+  .agent-row.sel .st{color:var(--pine);border-color:var(--pine)}
+  .agent-detail{border:1px solid var(--line-2);border-radius:14px;background:var(--card);padding:40px;position:relative;min-height:290px}
+  .agent-detail .ad-ix{font-family:var(--mono);font-size:12px;color:var(--ink-faint);letter-spacing:.14em}
+  .agent-detail h2{font-family:var(--serif);font-weight:400;font-size:38px;letter-spacing:-.01em;margin:10px 0 4px}
+  .agent-detail .rl{font-family:var(--mono);font-size:13px;color:var(--pine);margin-bottom:20px}
+  .agent-detail p{font-size:16.5px;color:var(--ink-soft);line-height:1.66;max-width:520px}
+  .agent-detail .rule{height:1px;background:var(--line);margin:22px 0}
+
+  /* ============ PLATFORM ============ */
+  .plat-wrap{width:100%}
+  .plat-head{max-width:640px;margin-bottom:34px}
+  .plat-head h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,3.4vw,48px);line-height:1.03;letter-spacing:-.02em;margin:14px 0 12px}
+  .plat-head h2 em{font-style:italic;color:var(--pine)}
+  .plat-head p{color:var(--ink-mute);font-size:15.5px;max-width:520px;line-height:1.55}
+  .plat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:var(--card)}
+  @media(max-width:900px){.plat-grid{grid-template-columns:1fr}}
+  .pcard{padding:28px;border-right:1px solid var(--line)}
+  .pcard:last-child{border-right:none}
+  .pcard .cn{font-family:var(--mono);color:var(--pine);font-size:12px;letter-spacing:.04em}
+  .pcard h3{font-family:var(--serif);font-weight:500;font-size:19px;margin:14px 0 9px}
+  .pcard p{font-size:13.5px;color:var(--ink-mute);line-height:1.55}
+  .plat-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-top:26px;flex-wrap:wrap}
+  .plat-tools{display:flex;flex-wrap:wrap;gap:8px;max-width:640px}
+  .kv{display:flex;gap:34px}
+  .kv .n{font-family:var(--serif);font-size:clamp(26px,2.8vw,38px);letter-spacing:-.01em}
+  .kv .l{font-family:var(--mono);font-size:10px;color:var(--ink-mute);letter-spacing:.06em;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<div class="shell">
+  <header>
+    <div class="brand"><span class="mark"></span> SynqLab</div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-view="home"><span class="tn">01</span>Home</button>
+      <button class="tab" data-view="loop"><span class="tn">02</span>The Loop</button>
+      <button class="tab" data-view="team"><span class="tn">03</span>The Team</button>
+      <button class="tab" data-view="platform"><span class="tn">04</span>Platform</button>
+    </div>
+    <a class="btn btn-solid" href="#">Book a demo</a>
+  </header>
+
+  <div class="stage">
+
+    <!-- HOME -->
+    <section class="view active" id="home">
+      <div class="home-wrap">
+        <div class="home">
+          <span class="kicker">An AI research team for the lab</span>
+          <h1>Biology's <em>self&#8209;improving</em> operating system.</h1>
+          <p class="lead">A team of AI agents runs your design–test–learn loop, records every outcome — even the failures — and gets sharper with every experiment.</p>
+          <div class="cta">
+            <a class="btn btn-solid btn-lg" href="#">Book a demo</a>
+            <a class="btn btn-ghost btn-lg" data-goto="loop" href="#">See the loop →</a>
+          </div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 100 100">
+            <circle class="dg-ring" cx="50" cy="50" r="46"/>
+            <circle class="dg-rot" cx="50" cy="50" r="46"/>
+            <circle class="dg-ring" cx="50" cy="50" r="30" opacity="0.5"/>
+            <g id="dg-nodes"></g>
+            <circle class="dg-core" cx="50" cy="50" r="12"/>
+            <text class="dg-core-t" x="50" y="48">DESIGN</text>
+            <text class="dg-core-t" x="50" y="53">ROUND</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOOP -->
+    <section class="view" id="loop">
+      <div class="loop-wrap">
+        <div class="orbit" id="orbit">
+          <svg viewBox="0 0 100 100">
+            <circle class="orbit-ring" cx="50" cy="50" r="44"/>
+            <circle class="orbit-prog" id="orbit-prog" cx="50" cy="50" r="44"
+              transform="rotate(-90 50 50)" stroke-dasharray="276.5" stroke-dashoffset="221"/>
+          </svg>
+          <div class="orbit-center">
+            <div class="oc-n" id="oc-n">STAGE 01 / 05</div>
+            <div class="oc-t serif" id="oc-t">Generate</div>
+          </div>
+        </div>
+        <div class="loop-detail">
+          <span class="kicker">A pipeline runs once — this loops</span>
+          <h2 class="serif" id="ld-title">Generate</h2>
+          <div class="ld-body" id="ld-body"></div>
+          <div class="ld-tools" id="ld-tools"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="view" id="team">
+      <div class="team-wrap">
+        <div>
+          <span class="kicker" style="margin-bottom:20px;display:inline-flex">Not one model — a team</span>
+          <div class="agent-list" id="agent-list"></div>
+        </div>
+        <div class="agent-detail" id="agent-detail"></div>
+      </div>
+    </section>
+
+    <!-- PLATFORM -->
+    <section class="view" id="platform">
+      <div class="plat-wrap">
+        <div class="plat-head">
+          <span class="kicker">The platform</span>
+          <h2 class="serif">One registry. Every tool, <em>one interface</em>.</h2>
+          <p>Generators, predictors, docking, simulation, and learned metrics — all callable through a single traced interface.</p>
+        </div>
+        <div class="plat-grid">
+          <div class="pcard"><div class="cn">// metric learning</div><h3 class="serif">Task-specific scoring</h3><p>Small predictors trained on your own measurements — the metric that matters improves every round.</p></div>
+          <div class="pcard"><div class="cn">// budget-aware</div><h3 class="serif">Staged compute</h3><p>Cheap gates cut most candidates before expensive tools ever run.</p></div>
+          <div class="pcard"><div class="cn">// provenance</div><h3 class="serif">Everything traceable</h3><p>Each candidate traces back to the model, prompt, and data that made it.</p></div>
+        </div>
+        <div class="plat-foot">
+          <div class="plat-tools" id="plat-tools"></div>
+          <div class="kv">
+            <div><div class="n accent">49</div><div class="l">tools · one registry</div></div>
+            <div><div class="n accent">&lt;30m</div><div class="l">full loop · one laptop</div></div>
+            <div><div class="n accent">100%</div><div class="l">runs versioned</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="foot">
+    <span>© 2026 SynqLab</span>
+    <div class="stepline">
+      <span class="mono">design → test → learn &#8635;</span>
+      <span class="stepnum" id="stepnum">01 / 04</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const views=['home','loop','team','platform'];
+  const tabEls=[...document.querySelectorAll('.tab')];
+  const stepnum=document.getElementById('stepnum');
+  function setView(v){
+    views.forEach((n,i)=>{
+      document.getElementById(n).classList.toggle('active',n===v);
+      tabEls[i].classList.toggle('active',tabEls[i].dataset.view===v);
+    });
+    stepnum.textContent=String(views.indexOf(v)+1).padStart(2,'0')+' / 04';
+  }
+  document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(t)setView(t.dataset.view);});
+  document.querySelectorAll('[data-goto]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();setView(a.dataset.goto);}));
+  document.addEventListener('keydown',e=>{
+    const c=views.findIndex(v=>document.getElementById(v).classList.contains('active'));
+    if(e.key==='ArrowRight')setView(views[(c+1)%views.length]);
+    if(e.key==='ArrowLeft')setView(views[(c-1+views.length)%views.length]);
+    if(['1','2','3','4'].includes(e.key))setView(views[+e.key-1]);
+  });
+
+  // home diagram nodes
+  const dgNodes=document.getElementById('dg-nodes');
+  ['G','E','S','L','↻'].forEach((c,i)=>{
+    const a=(-90+i*72)*Math.PI/180, x=50+46*Math.cos(a), y=50+46*Math.sin(a);
+    dgNodes.insertAdjacentHTML('beforeend',
+      `<g class="dg-node"><circle cx="${x}" cy="${y}" r="5.4"/><text x="${x}" y="${y}">${c}</text></g>`);
+  });
+
+  // LOOP orbit
+  const STAGES=[
+    {t:'Generate',b:'Agents pick the right generative models and sample a budget-controlled batch of candidates.',tools:['ProtGPT2','PepMLM','RFdiffusion','EvoDiff']},
+    {t:'Evaluate',b:'Cost-ordered gates — cheap structural screens first, expensive predictors only for survivors.',tools:['ESMFold','AlphaFold-Multimer','FoldX','DiffDock-PP']},
+    {t:'Simulate',b:'The most promising candidates get a heavier simulation pass before final selection.',tools:['GROMACS','OpenMM','PyRosetta']},
+    {t:'Label',b:'Every candidate — winners and rejects alike — is scored, stored, and versioned. Nothing is thrown away.',tools:['Knowledge store','Full provenance']},
+    {t:'Learn',b:'Task-specific models retrain on the new labels and steer the next round toward high performers.',tools:['LoRA fine-tuning','Preference learning','Learned metrics']},
+  ];
+  const orbit=document.getElementById('orbit');
+  const CIRC=2*Math.PI*44;
+  const prog=document.getElementById('orbit-prog');
+  prog.setAttribute('stroke-dasharray',CIRC.toFixed(1));
+  STAGES.forEach((s,i)=>{
+    const a=(-90+i*72)*Math.PI/180, cx=50+44*Math.cos(a), cy=50+44*Math.sin(a);
+    const el=document.createElement('div');
+    el.className='onode'+(i===0?' sel':'');el.style.left=cx+'%';el.style.top=cy+'%';el.dataset.i=i;
+    el.innerHTML=`<div class="ring">0${i+1}</div><div class="lbl">${s.t}</div>`;
+    el.addEventListener('mouseenter',()=>selStage(i));
+    el.addEventListener('click',()=>selStage(i));
+    orbit.appendChild(el);
+  });
+  function selStage(i){
+    const s=STAGES[i];
+    document.querySelectorAll('.onode').forEach(n=>n.classList.toggle('sel',+n.dataset.i===i));
+    document.getElementById('oc-n').textContent='STAGE 0'+(i+1)+' / 05';
+    document.getElementById('oc-t').textContent=s.t;
+    document.getElementById('ld-title').textContent=s.t;
+    document.getElementById('ld-body').textContent=s.b;
+    document.getElementById('ld-tools').innerHTML=s.tools.map(t=>`<span class="chip">${t}</span>`).join('');
+    prog.setAttribute('stroke-dashoffset',(CIRC*(1-(i+1)/5)).toFixed(1));
+  }
+  selStage(0);
+
+  // TEAM
+  const AGENTS=[
+    {ic:'◇',nm:'Coordinator',rl:'plans · routes · synthesizes',st:'Orchestrator',p:'You describe the goal. The coordinator decomposes it into steps, picks the right specialist or tool for each, tracks compute budget, and stitches every result back together with a full audit trail.'},
+    {ic:'A',nm:'Aria',rl:'biological sequence design',st:'In development',p:'An instruction-tuned model that designs proteins and peptides from natural-language property goals, then sharpens itself through preference learning on scored results.'},
+    {ic:'P',nm:'Phoenix',rl:'small-molecule design',st:'In production',p:"Chemistry's counterpart to Aria — generates and optimizes small molecules toward target properties."},
+    {ic:'E',nm:'Edison',rl:'literature & evidence',st:'Integrated',p:'Searches literature and prior art to ground every hypothesis in real evidence and precedent before the lab spends a cycle on it.'},
+    {ic:'F',nm:'Falcon',rl:'structured reports',st:'Integrated',p:"Turns a project's raw results into deep, referenced write-ups — ready for review, filing, or publication."},
+    {ic:'L',nm:'Lab Agent',rl:'wet-lab execution',st:'Roadmap',p:'Closes the physical loop — ordering synthesis, running assays, and streaming real measurements back into the knowledge store.'},
+  ];
+  const list=document.getElementById('agent-list'), detail=document.getElementById('agent-detail');
+  AGENTS.forEach((a,i)=>{
+    const row=document.createElement('div');
+    row.className='agent-row'+(i===0?' sel':'');row.dataset.i=i;
+    row.innerHTML=`<span class="idx">0${i+1}</span><div><div class="nm serif">${a.nm}</div><div class="rl">${a.rl}</div></div><span class="st">${a.st}</span>`;
+    row.addEventListener('mouseenter',()=>selAgent(i));
+    row.addEventListener('click',()=>selAgent(i));
+    list.appendChild(row);
+  });
+  function selAgent(i){
+    const a=AGENTS[i];
+    document.querySelectorAll('.agent-row').forEach(r=>r.classList.toggle('sel',+r.dataset.i===i));
+    detail.innerHTML=`<div class="ad-ix">SPECIALIST 0${i+1} / 06</div><h2 class="serif">${a.nm}</h2><div class="rl">${a.rl}</div><div class="rule"></div><p>${a.p}</p>`;
+  }
+  selAgent(0);
+
+  // PLATFORM tools
+  const tools=['ProtGPT2','PepMLM','RFdiffusion','ProteinMPNN','OmegaFold','ESMFold','AlphaFold-Multimer','FoldX','DiffDock-PP','PyRosetta','GROMACS','MMseqs2','+ your own'];
+  document.getElementById('plat-tools').innerHTML=tools.map(t=>`<span class="chip">${t}</span>`).join('');
+</script>
+</body>
+</html>

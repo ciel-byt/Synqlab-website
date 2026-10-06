@@ -55,10 +55,19 @@ def delete_todo(todo_id: int):
     return {"ok": True}
 
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+BASE_DIR = os.path.dirname(__file__)
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+
+@app.get("/")
+def landing():
+    return FileResponse(os.path.join(BASE_DIR, "landing.html"))
+
+
 if os.path.isdir(STATIC_DIR):
     app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
 
-    @app.get("/{full_path:path}")
-    def spa(full_path: str):
+    @app.get("/app")
+    @app.get("/app/{full_path:path}")
+    def todo_app(full_path: str = ""):
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
