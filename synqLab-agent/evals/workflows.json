@@ -1,0 +1,68 @@
+[
+  {
+    "id": "wf-01",
+    "name": "Basic Protein Folding",
+    "description": "User asks to fold a protein and get a structure prediction",
+    "prompt": "Predict the structure of this protein: MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH",
+    "expected_tool_sequence": ["predict_structure"],
+    "completion_criteria": {
+      "tools_called": ["predict_structure"],
+      "has_text_response": true,
+      "mentions_plddt": true
+    },
+    "max_turns": 5
+  },
+  {
+    "id": "wf-02",
+    "name": "Fold + Stability Analysis",
+    "description": "User asks to fold and then analyze stability of a mutation",
+    "prompt": "Fold the sequence MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKT and then analyze the stability of mutation A23G",
+    "expected_tool_sequence": ["predict_structure", "analyze_stability"],
+    "completion_criteria": {
+      "tools_called": ["predict_structure", "analyze_stability"],
+      "has_text_response": true,
+      "mentions_ddg": true
+    },
+    "max_turns": 8
+  },
+  {
+    "id": "wf-03",
+    "name": "Literature Review Workflow",
+    "description": "User asks to search literature and write a summary report",
+    "prompt": "Search for recent research on protein-protein interactions in cancer signaling and write a summary report",
+    "expected_tool_sequence": ["literature_search", "write_report"],
+    "completion_criteria": {
+      "tools_called": ["literature_search", "write_report"],
+      "has_text_response": true,
+      "report_generated": true
+    },
+    "max_turns": 8
+  },
+  {
+    "id": "wf-04",
+    "name": "Sequence Design Pipeline",
+    "description": "Full design workflow: generate variants, fold best one, analyze stability",
+    "prompt": "Design 5 thermostable variants of MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH, fold the most promising one, and analyze how mutation K27R affects its stability",
+    "expected_tool_sequence": ["generate_sequences", "predict_structure", "analyze_stability"],
+    "completion_criteria": {
+      "tools_called": ["generate_sequences", "predict_structure", "analyze_stability"],
+      "has_text_response": true,
+      "mentions_plddt": true,
+      "mentions_ddg": true
+    },
+    "max_turns": 12
+  },
+  {
+    "id": "wf-05",
+    "name": "Knowledge-Only Query",
+    "description": "User asks a question that should NOT trigger any tools",
+    "prompt": "Explain the difference between AlphaFold and ESMFold in terms of their neural network architecture",
+    "expected_tool_sequence": [],
+    "completion_criteria": {
+      "tools_called": [],
+      "has_text_response": true,
+      "no_tools_used": true
+    },
+    "max_turns": 3
+  }
+]

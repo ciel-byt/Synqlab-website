@@ -1,0 +1,21 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ include "synqlab.fullname" . }}-gateway
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+spec:
+  healthCheck:
+    type: HTTP
+    port: {{ .Values.gateway.port }}
+    requestPath: /healthz
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+  timeoutSec: 1800          # 30 min — long-running ML inference requests
+  connectionDraining:
+    drainingTimeoutSec: 60
+{{- end }}

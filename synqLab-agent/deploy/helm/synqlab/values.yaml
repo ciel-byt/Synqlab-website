@@ -1,0 +1,522 @@
+# ═══════════════════════════════════════════════════════════════════
+# SynqLab Helm Chart — Default Values (dev)
+#
+# Structure:
+#   global          → pull policy, security defaults
+#   imageRegistry   → Artifact Registry URL (kept out of global to avoid
+#                     Bitnami subchart conflicts)
+#   gateway         → the main FastAPI + React app
+#   tools           → map of model/compute tools (add new entries here,
+#                     no template changes needed). Will scale to 200+ tools.
+#   postgresql      → Bitnami subchart config
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── Global ─────────────────────────────────────────────────────
+global:
+  imagePullPolicy: Always
+
+# SynqLab image registry (not under global to avoid Bitnami subchart conflicts)
+imageRegistry: "us-central1-docker.pkg.dev/project-41f6f4ea-8a21-4190-a8a/synqlab"
+
+namespace: synqlab
+
+# ─── GCS Buckets ───────────────────────────────────────────────
+gcs:
+  assetsBucket: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+
+# ─── Service Account (Workload Identity) ───────────────────────
+serviceAccount:
+  create: true
+  name: synqlab-workload
+  annotations:
+    iam.gke.io/gcp-service-account: "synqlab-workload@project-41f6f4ea-8a21-4190-a8a.iam.gserviceaccount.com"
+
+# ─── Pod Security Defaults ─────────────────────────────────────
+podSecurityDefaults:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityDefaults:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false   # many ML libs write to /, override per tool
+  capabilities:
+    drop: [ALL]
+
+# ─── Ingress ───────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "synqlab-ingress-ip"
+    networking.gke.io/managed-certificates: "synqlab-cert-app-synqlab-ai,synqlab-cert-synqlab-ai"
+    networking.gke.io/v1beta1.FrontendConfig: "synqlab-frontend-config"
+  hosts:
+    - host: "app.synqlab.ai"
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: "synqlab.ai"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# ─── Network Policy ───────────────────────────────────────────
+networkPolicy:
+  enabled: true
+
+# ═══════════════════════════════════════════════════════════════════
+# Gateway — FastAPI + React SPA (the only public-facing service)
+# ═══════════════════════════════════════════════════════════════════
+gateway:
+  replicaCount: 1
+  image:
+    repository: app
+    tag: latest
+  port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 100Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 512Mi
+  hpa:
+    enabled: false    # disable for dev (single node)
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  pdb:
+    enabled: false
+    minAvailable: 1
+  env:
+    SYNQLAB_LOG_LEVEL: "INFO"
+    # Phase 13: in-container path of the shared `agent-artifacts` volume (must
+    # match gateway/deployment.yaml + tools/deployment.yaml volumeMounts).
+    SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"
+  probes:
+    liveness:
+      path: /healthz
+      initialDelaySeconds: 15
+      periodSeconds: 30
+      timeoutSeconds: 5
+    readiness:
+      path: /healthz
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+    startup:
+      path: /healthz
+      failureThreshold: 30
+      periodSeconds: 5
+
+# ═══════════════════════════════════════════════════════════════════
+# Tools — Model / Compute Services
+#
+# Each entry becomes a Deployment + ClusterIP Service automatically.
+# To add a new tool: add an entry here. No template changes needed.
+#
+# Supported fields per tool:
+#   enabled, replicaCount, image, port, gpu, env, resources, probes,
+#   extraVolumes, extraVolumeMounts, podAnnotations, securityOverrides
+# ═══════════════════════════════════════════════════════════════════
+tools:
+
+  # ─── ProtGPT2 — Sequence generation ───────────────────────────
+  protgpt2:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300   # 5 min idle → scale to 0
+    image:
+      repository: protgpt2-svc
+      tag: latest
+    port: 8001
+    gpu:
+      enabled: false          # GPU quota denied — re-enable when approved
+      type: "nvidia-l4"
+      count: 1
+    env:
+      HF_HUB_OFFLINE: "1"          # GCS Fuse is read-only, skip lock files
+      TRANSFORMERS_OFFLINE: "1"
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"   # Phase 13 shared mount
+    resources:
+      requests:
+        cpu: "1"
+        memory: 1Gi                 # idle: 522Mi, first-load: ~900Mi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: "8"                    # peak: 4000m (was throttled at 4)
+        memory: 4Gi                 # peak (20×200aa): 2.4Gi
+        ephemeral-storage: 1Gi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 30
+        periodSeconds: 30
+        timeoutSeconds: 10
+      readiness:
+        path: /health
+        initialDelaySeconds: 10
+        periodSeconds: 15
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 30    # ~5 min max — weights pre-loaded from GCS
+        periodSeconds: 10
+    extraVolumes:
+      - name: model-weights
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+            mountOptions: "only-dir=models/protgpt2/,implicit-dirs"
+    extraVolumeMounts:
+      - name: model-weights
+        mountPath: /app/.cache/huggingface/hub/models--nferruz--ProtGPT2
+        readOnly: true
+    podAnnotations:
+      gke-gcsfuse/volumes: "true"
+
+  # ─── OmegaFold — Structure prediction ─────────────────────────
+  omegafold:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    image:
+      repository: omegafold-svc
+      tag: latest
+    port: 8002
+    gpu:
+      enabled: false        # flip to true for prod
+      type: "nvidia-tesla-t4"
+      count: 1
+    env:
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"   # Phase 13 shared mount
+    resources:
+      requests:
+        cpu: "1"
+        memory: 4Gi                 # idle: 3.7Gi (weights in memory)
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: "8"
+        memory: 8Gi                 # loading spike > 6Gi, inference peak: 3.9Gi
+        ephemeral-storage: 1Gi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        timeoutSeconds: 10
+      readiness:
+        path: /health
+        initialDelaySeconds: 20
+        periodSeconds: 15
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 30    # ~5 min max — weights pre-loaded from GCS
+        periodSeconds: 10
+    extraVolumes:
+      - name: model-weights
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+            mountOptions: "only-dir=models/omegafold/,implicit-dirs"
+    extraVolumeMounts:
+      - name: model-weights
+        mountPath: /app/.cache/omegafold_ckpt
+        readOnly: true
+    podAnnotations:
+      gke-gcsfuse/volumes: "true"
+
+  # ─── FoldX — Energy scoring (CPU only) ─────────────────────────
+  foldx:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    image:
+      repository: foldx-svc
+      tag: latest
+    port: 8003
+    gpu:
+      enabled: false
+    env:
+      SYNQLAB_FOLDX_BINARY_PATH: "/opt/foldx/foldx_20270131"
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"   # Phase 13 shared mount
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+        ephemeral-storage: 512Mi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+      readiness:
+        path: /health
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 10
+        periodSeconds: 5
+    extraVolumes:
+      - name: foldx-binary
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+            # file-mode=0755 / dir-mode=0755 so the FoldX binary is executable
+            # (GCS Fuse defaults drop the exec bit → PermissionError on /opt/foldx/foldx_*).
+            mountOptions: "only-dir=foldx/,implicit-dirs,file-mode=0755,dir-mode=0755"
+    extraVolumeMounts:
+      - name: foldx-binary
+        mountPath: /opt/foldx
+        readOnly: true
+    podAnnotations:
+      gke-gcsfuse/volumes: "true"
+
+  # ─── Reranker — Candidate scoring (CPU only) ──────────────────
+  reranker:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    artifacts:
+      gcs: true               # needs model.pkl from GCS bucket
+    image:
+      repository: reranker-svc
+      tag: latest
+    port: 8004
+    gpu:
+      enabled: false
+    env:
+      SYNQLAB_RERANKER_MODEL_PATH: "data/models/reranker/model.pkl"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 256Mi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+      readiness:
+        path: /health
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 10
+        periodSeconds: 5
+    extraVolumes: []
+    extraVolumeMounts: []
+    podAnnotations: {}
+
+  # ─── ESMFold — Structure prediction (Meta) ───────────────────
+  esmfold:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    image:
+      repository: esmfold-svc
+      tag: latest
+    port: 8005
+    gpu:
+      enabled: false          # GPU quota denied — re-enable when approved
+      type: "nvidia-l4"
+      count: 1
+    env:
+      DEVICE: "cpu"                   # no GPU — run on CPU
+      TORCH_HOME: "/app/.cache/torch" # GCS Fuse mount for weights
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"   # Phase 13 shared mount
+    resources:
+      requests:
+        cpu: "2"
+        memory: 16Gi                # actual idle: ~14 Gi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: "8"
+        memory: 24Gi                # peak during inference: ~20 Gi
+        ephemeral-storage: 1Gi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        timeoutSeconds: 10
+      readiness:
+        path: /health
+        initialDelaySeconds: 20
+        periodSeconds: 15
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 60    # ~10 min max — weights loaded from GCS Fuse on first start
+        periodSeconds: 10
+    extraVolumes:
+      - name: model-weights
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+            mountOptions: "only-dir=models/esmfold/,implicit-dirs"
+    extraVolumeMounts:
+      - name: model-weights
+        mountPath: /app/.cache/torch/hub/checkpoints
+        readOnly: true
+    podAnnotations:
+      gke-gcsfuse/volumes: "true"
+
+  # ─── ProteinMPNN — Inverse folding (CPU only) ─────────────────
+  proteinmpnn:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    image:
+      repository: proteinmpnn-svc
+      tag: latest
+    port: 8006
+    gpu:
+      enabled: false          # runs fine on CPU (~1.6M params)
+    env:
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"   # Phase 13 shared mount
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+        ephemeral-storage: 512Mi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+      readiness:
+        path: /health
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 10
+        periodSeconds: 5
+    extraVolumes: []
+    extraVolumeMounts: []
+    podAnnotations: {}
+
+  # ─── Brightness Scoring Service (CPU only, Phase 23) ────────
+  brightness:
+    enabled: true
+    replicaCount: 1
+    scaleToZero: true
+    idleTimeoutSeconds: 300
+    image:
+      repository: brightness-svc
+      tag: latest
+    port: 8007
+    gpu:
+      enabled: false          # strictly CPU mode
+    env:
+      DEVICE: "cpu"
+      SYNQLAB_BRIGHTNESS_MODEL_PATH: "/app/models/model.pkl"
+      SYNQLAB_ARTIFACT_DIR: "/app/data/agent_artifacts"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+        ephemeral-storage: 100Mi
+      limits:
+        cpu: "4"
+        memory: 2Gi
+        ephemeral-storage: 512Mi
+    probes:
+      liveness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 30
+        timeoutSeconds: 5
+      readiness:
+        path: /health
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 5
+      startup:
+        path: /health
+        failureThreshold: 10
+        periodSeconds: 5
+    extraVolumes:
+      - name: model-weights
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "project-41f6f4ea-8a21-4190-a8a-assets-dev"
+            mountOptions: "only-dir=models/brightness/,implicit-dirs"
+    extraVolumeMounts:
+      - name: model-weights
+        mountPath: /app/models
+        readOnly: true
+    podAnnotations:
+      gke-gcsfuse/volumes: "true"
+
+# ─── PostgreSQL (Bitnami subchart) ────────────────────────────
+# NOTE: Bitnami deprecated versioned Docker tags (late 2025).
+# Override image.tag to "latest" since the bundled chart references
+# a tag that no longer exists on DockerHub.
+postgresql:
+  enabled: true
+  image:
+    tag: latest
+  auth:
+    database: synqlab
+    username: synqlab
+    password: synclab              # NOTE: typo is intentional — DB was bootstrapped with this value. Override via --set or existingSecret.
+    existingSecret: ""
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "standard"    # pd-standard (HDD) — doesn't consume SSD quota
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi

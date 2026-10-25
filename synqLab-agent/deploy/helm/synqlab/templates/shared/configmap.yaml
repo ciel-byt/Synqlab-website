@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synqlab.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+data:
+  SYNQLAB_LOG_LEVEL: {{ .Values.gateway.env.SYNQLAB_LOG_LEVEL | default "INFO" | quote }}
+  SYNQLAB_STORAGE_PATH: {{ .Values.gateway.env.SYNQLAB_ARTIFACT_DIR | default "/app/data/agent_artifacts" | quote }}
+  # Phase 13: shared host volume mount path for auto-persisted agent artifacts
+  # (PDB structures, FASTA dumps). Must match the in-container mountPath of the
+  # `agent-artifacts` volume in gateway/deployment.yaml + tools/deployment.yaml.
+  SYNQLAB_ARTIFACT_DIR: {{ .Values.gateway.env.SYNQLAB_ARTIFACT_DIR | default "/app/data/agent_artifacts" | quote }}
+  # Use ESMFold for complex folding in k8s — OmegaFold OOMs on ~250 residue
+  # complexes (GFP1-10 + linker + GFP11) within the 8Gi pod memory limit.
+  SYNQLAB_VALIDATE_COMPLEX_BACKEND: "esmfold"
+  SYNQLAB_DEFAULT_FOLD_BACKEND: "esmfold"
+  # Match the GCS Fuse mount: models/brightness/ → /app/models
+  SYNQLAB_BRIGHTNESS_MODEL_DIR: "/app/models"
+  SYNQLAB_FOLD_TIMEOUT_S: "3600"
+  SYNQLAB_FOLDX_TIMEOUT_S: "900"
+  {{- range $name, $tool := .Values.tools }}
+  {{- if $tool.enabled }}
+  {{ printf "SYNQLAB_%s_URL" ($name | upper) }}: {{ printf "http://%s-%s:%v" (include "synqlab.fullname" $) $name (toString $tool.port) | quote }}
+  {{- end }}
+  {{- end }}

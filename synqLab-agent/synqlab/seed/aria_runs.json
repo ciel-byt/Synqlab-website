@@ -1,0 +1,380 @@
+{
+ "metrics": [
+  {
+   "key": "recovery",
+   "label": "Family recovery",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generated proteins that belong to the requested protein family",
+   "group": "Family tuning"
+  },
+  {
+   "key": "tm",
+   "label": "Structure match",
+   "unit": "TM",
+   "dec": 3,
+   "help": "Mean TM-score of predicted structures against natural family members",
+   "group": "Family tuning"
+  },
+  {
+   "key": "tm50",
+   "label": "Fold match",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generated proteins whose predicted structure matches a natural member (TM-score at least 0.5)",
+   "group": "Family tuning"
+  },
+  {
+   "key": "confidence",
+   "label": "Confidence",
+   "unit": "/100",
+   "dec": 1,
+   "help": "Mean predicted structure confidence (pLDDT)",
+   "group": "Family tuning"
+  },
+  {
+   "key": "follows",
+   "label": "Follows request",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generated proteins that pass the specification gate",
+   "group": "Family tuning"
+  },
+  {
+   "key": "filters",
+   "label": "Quality filters",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generated proteins that pass the sequence filters",
+   "group": "Family tuning"
+  },
+  {
+   "key": "checks",
+   "label": "Passes all",
+   "unit": "%",
+   "dec": 1,
+   "help": "Pass the gate, the filters and reach confidence 70 or more",
+   "group": "Family tuning"
+  },
+  {
+   "key": "bare",
+   "label": "Bare sequence",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generations that return a bare sequence instead of prose",
+   "group": "Format and domain"
+  },
+  {
+   "key": "len10",
+   "label": "Length \u00b110%",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences within 10% of the requested length",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "hydro",
+   "label": "Hydrophobicity",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences matching the requested hydrophobicity level",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "stab",
+   "label": "Stability",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences matching the requested stability level",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "aggr",
+   "label": "Aggregation",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences matching the requested aggregation level",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "cys",
+   "label": "Cysteine count",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences with exactly the requested number of cysteines",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "charge2",
+   "label": "Net charge \u00b12",
+   "unit": "%",
+   "dec": 1,
+   "help": "Sequences within 2 charge units of the requested net charge",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "chgr",
+   "label": "Charge correlation",
+   "unit": "r",
+   "dec": 2,
+   "help": "Correlation between requested and realized net charge",
+   "group": "Specification adherence"
+  },
+  {
+   "key": "tmrec",
+   "label": "Transmembrane recall",
+   "unit": "%",
+   "dec": 1,
+   "help": "Requested transmembrane helices that were produced",
+   "group": "Topology"
+  },
+  {
+   "key": "tmprec",
+   "label": "Transmembrane precision",
+   "unit": "%",
+   "dec": 1,
+   "help": "Produced transmembrane helices that were requested",
+   "group": "Topology"
+  },
+  {
+   "key": "tmmcc",
+   "label": "Transmembrane MCC",
+   "unit": "MCC",
+   "dec": 3,
+   "help": "Matthews correlation for requested transmembrane helices",
+   "group": "Topology"
+  },
+  {
+   "key": "sigrec",
+   "label": "Signal peptide recall",
+   "unit": "%",
+   "dec": 1,
+   "help": "Requested signal peptides that were produced",
+   "group": "Topology"
+  },
+  {
+   "key": "sigprec",
+   "label": "Signal peptide precision",
+   "unit": "%",
+   "dec": 1,
+   "help": "Produced signal peptides that were requested",
+   "group": "Topology"
+  },
+  {
+   "key": "sigmcc",
+   "label": "Signal peptide MCC",
+   "unit": "MCC",
+   "dec": 3,
+   "help": "Matthews correlation for requested signal peptides",
+   "group": "Topology"
+  },
+  {
+   "key": "pfam",
+   "label": "Exact Pfam recovery",
+   "unit": "%",
+   "dec": 1,
+   "help": "Generations where the requested Pfam domain is detected",
+   "group": "Format and domain"
+  }
+ ],
+ "families": {
+  "PF00237": {
+   "short": "uL22",
+   "name": "Large ribosomal subunit protein uL22",
+   "held_out": 89,
+   "max_rounds": 3,
+   "seeds": 2,
+   "rounds": {
+    "0": {
+     "recovery": 9.0,
+     "tm": 0.266,
+     "tm50": 5.1,
+     "confidence": 55.4,
+     "follows": 34.5,
+     "filters": 89.8,
+     "checks": 8.5
+    },
+    "1": {
+     "recovery": 31.1,
+     "tm": 0.33,
+     "tm50": 22.6,
+     "confidence": 59.4,
+     "follows": 40.1,
+     "filters": 93.2,
+     "checks": 15.3
+    },
+    "2": {
+     "recovery": 30.7,
+     "tm": 0.319,
+     "tm50": 21.4,
+     "confidence": 58.1,
+     "follows": 45.0,
+     "filters": 87.2,
+     "checks": 8.0
+    },
+    "3": {
+     "recovery": 38.7,
+     "tm": 0.363,
+     "tm50": 30.1,
+     "confidence": 58.9,
+     "follows": 38.8,
+     "filters": 89.0,
+     "checks": 8.7
+    }
+   }
+  },
+  "PF00467": {
+   "short": "uL24",
+   "name": "Large ribosomal subunit protein uL24",
+   "held_out": 211,
+   "max_rounds": 3,
+   "seeds": 2,
+   "rounds": {
+    "0": {
+     "recovery": 28.4,
+     "tm": 0.389,
+     "tm50": 24.4,
+     "confidence": 58.7,
+     "follows": 51.7,
+     "filters": 90.5,
+     "checks": 13.7
+    },
+    "1": {
+     "recovery": 56.2,
+     "tm": 0.549,
+     "tm50": 54.5,
+     "confidence": 60.8,
+     "follows": 57.1,
+     "filters": 97.4,
+     "checks": 19.3
+    },
+    "2": {
+     "recovery": 69.6,
+     "tm": 0.615,
+     "tm50": 67.4,
+     "confidence": 61.3,
+     "follows": 63.3,
+     "filters": 98.3,
+     "checks": 24.3
+    },
+    "3": {
+     "recovery": 74.0,
+     "tm": 0.655,
+     "tm50": 72.0,
+     "confidence": 64.0,
+     "follows": 64.7,
+     "filters": 98.3,
+     "checks": 34.6
+    }
+   }
+  },
+  "PF03652": {
+   "short": "YqgF",
+   "name": "Putative pre-16S rRNA nuclease",
+   "held_out": 60,
+   "max_rounds": 3,
+   "seeds": 2,
+   "rounds": {
+    "0": {
+     "recovery": 44.2,
+     "tm": 0.468,
+     "tm50": 45.0,
+     "confidence": 45.4,
+     "follows": 48.3,
+     "filters": 95.0,
+     "checks": 0.8
+    },
+    "1": {
+     "recovery": 77.1,
+     "tm": 0.582,
+     "tm50": 66.9,
+     "confidence": 52.5,
+     "follows": 50.9,
+     "filters": 99.2,
+     "checks": 4.2
+    },
+    "2": {
+     "recovery": 80.8,
+     "tm": 0.594,
+     "tm50": 69.2,
+     "confidence": 54.5,
+     "follows": 49.2,
+     "filters": 96.7,
+     "checks": 5.0
+    },
+    "3": {
+     "recovery": 81.4,
+     "tm": 0.637,
+     "tm50": 78.0,
+     "confidence": 58.4,
+     "follows": 46.6,
+     "filters": 95.8,
+     "checks": 13.6
+    }
+   }
+  },
+  "PF00416": {
+   "short": "uS13",
+   "name": "Small ribosomal subunit protein uS13",
+   "held_out": 260,
+   "max_rounds": 1,
+   "seeds": 1,
+   "rounds": {
+    "0": {
+     "confidence": 49.4,
+     "follows": 16.9,
+     "filters": 88.5,
+     "checks": 0.4
+    },
+    "1": {
+     "confidence": 57.6,
+     "follows": 25.8,
+     "filters": 96.5,
+     "checks": 7.3
+    }
+   }
+  }
+ },
+ "control": {
+  "general": {
+   "name": "General AI",
+   "note": "Unadapted general AI",
+   "values": {
+    "bare": 0.0,
+    "len10": 11.6,
+    "hydro": 62.4,
+    "stab": 52.9,
+    "aggr": 42.0,
+    "cys": 23.3,
+    "chgr": 0.26,
+    "tmrec": 14.0,
+    "tmmcc": 0.275,
+    "sigrec": 6.6,
+    "sigmcc": 0.073,
+    "pfam": 0.0
+   }
+  },
+  "aria": {
+   "name": "Aria base",
+   "note": "Supervised, before tuning",
+   "values": {
+    "bare": 99.9,
+    "len10": 88.8,
+    "hydro": 86.9,
+    "stab": 72.2,
+    "aggr": 74.5,
+    "cys": 68.9,
+    "charge2": 35.2,
+    "chgr": 0.89,
+    "tmrec": 86.5,
+    "tmprec": 91.4,
+    "tmmcc": 0.869,
+    "sigrec": 61.4,
+    "sigprec": 93.2,
+    "sigmcc": 0.739,
+    "pfam": 2.9
+   }
+  }
+ },
+ "source": "Aria paper (NeurIPS 2026). Control metrics: held-out evaluation of the supervised model. Tuning metrics: recorded per-round within-family evaluation, mean of two seeds where shown; round 0 is the supervised Aria base."
+}

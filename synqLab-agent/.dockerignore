@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════════
+# .dockerignore — SynqLab
+#
+# Keep the build context lean. Every service uses `context: .` so
+# this file applies to ALL Dockerfiles (app + 7 model services).
+# ═══════════════════════════════════════════════════════════════════
+
+# ── Version control ────────────────────────────────────────────────
+.git
+.gitignore
+.gitmodules
+
+# ── Node / Frontend (rebuilt inside Docker — don't ship host cache) ─
+node_modules
+frontend/node_modules
+frontend/dist
+
+# ── Python bytecode & caches ──────────────────────────────────────
+__pycache__
+*.py[cod]
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# ── Virtual environments ──────────────────────────────────────────
+.venv
+venv
+env
+
+# ── Build artifacts ───────────────────────────────────────────────
+.eggs
+*.egg-info
+dist
+build
+
+# ── Secrets & local config ────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Data directories (mounted as volumes, never baked into images) ─
+data/
+artifacts/**
+!artifacts/.gitkeep
+
+# ── IDE / OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+
+# ── Planning & docs (not needed at runtime) ───────────────────────
+.planning
+.agent
+.agents
+docs
+*.md
+!services/**/README.md
+LICENSE
+
+# ── Tests (not shipped in prod images) ────────────────────────────
+tests
+pytest.ini
+conftest.py
+
+# ── Docker meta (don't recurse into compose files) ────────────────
+docker-compose*.yml
+Dockerfile

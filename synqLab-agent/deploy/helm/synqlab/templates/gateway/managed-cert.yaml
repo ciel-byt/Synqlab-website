@@ -1,0 +1,16 @@
+{{- if .Values.ingress.enabled }}
+# One cert per domain — prevents re-provisioning when adding new domains
+{{- range .Values.ingress.hosts }}
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: synqlab-cert-{{ .host | replace "." "-" }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" $ | nindent 4 }}
+spec:
+  domains:
+    - {{ .host | quote }}
+{{- end }}
+{{- end }}

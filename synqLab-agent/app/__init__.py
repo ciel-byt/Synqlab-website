@@ -1,0 +1,1 @@
+"""SynqLab FastAPI application package."""

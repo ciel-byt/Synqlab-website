@@ -1,0 +1,29 @@
+{{/*
+  Generic Tool Service Template
+  ─────────────────────────────
+
+  Creates a ClusterIP Service for each enabled tool in .Values.tools.
+*/}}
+{{- range $name, $tool := .Values.tools }}
+{{- if $tool.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "synqlab.fullname" $ }}-{{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" $ | nindent 4 }}
+    {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 4 }}
+    synqlab.io/tier: tool
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $tool.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 4 }}
+{{- end }}
+{{- end }}

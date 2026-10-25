@@ -1,0 +1,9 @@
+resourceLimits:
+  - resourceType: cpu
+    minimum: 2
+    maximum: 24
+  - resourceType: memory
+    minimum: 4
+    maximum: 64
+diskType: pd-standard
+diskSizeGb: 50

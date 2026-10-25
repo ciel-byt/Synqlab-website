@@ -1,0 +1,12 @@
+# Reranker service dependencies
+# Core
+fastapi
+uvicorn
+
+# ML inference
+scikit-learn
+numpy
+
+# Shared schemas
+pyyaml
+pydantic

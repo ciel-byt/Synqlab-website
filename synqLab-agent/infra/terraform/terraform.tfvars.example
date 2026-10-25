@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════════════════
+# Example — copy to terraform.tfvars and fill in your values
+# ═══════════════════════════════════════════════════════════════════
+
+project_id  = "project-41f6f4ea-8a21-4190-a8a"
+region      = "us-central1"
+environment = "dev"
+
+# Networking
+vpc_name    = "synqlab-vpc"
+subnet_cidr = "10.0.0.0/20"
+
+# GKE
+cluster_name           = "synqlab-cluster"
+release_channel        = "REGULAR"
+master_authorized_cidr = "0.0.0.0/0"   # restrict in prod
+
+# Artifact Registry
+registry_name = "synqlab"
+
+# Storage
+foldx_bucket_name = "project-41f6f4ea-8a21-4190-a8a-assets"
+
+# Domain (set your GoDaddy domain here)
+domain         = ""          # e.g. "app.synqlab.com"
+enable_ingress = true

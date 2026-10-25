@@ -1,0 +1,35 @@
+# SynqLab V1 — Base Configuration
+# Override any value in configs/local.yaml (gitignored)
+# All values can also be overridden via environment variables prefixed SYNQLAB_
+
+database:
+  url: "postgresql://synqlab:synqlab@localhost:5432/synqlab"
+  # Override with SYNQLAB_DB_URL env var
+
+experiment:
+  n_sequences: 50
+  plddt_threshold: 70.0
+  ddg_threshold: 2.0
+  top_k: 10
+  use_reranker: false
+  auto_retrain_reranker: false
+
+registry:
+  path: "../registry/tools.yaml"
+  # Relative to agent/ folder (i.e. SynqLab/registry/tools.yaml)
+  # Override with SYNQLAB_REGISTRY_PATH env var
+
+artifacts:
+  base_dir: "artifacts"
+
+logging:
+  level: "INFO"
+
+tools:
+  foldx:
+    binary_path: ""   # set in local.yaml or SYNQLAB_FOLDX_BINARY_PATH
+
+compute:
+  device: "auto"  # 'auto' | 'cuda' | 'mps' | 'cpu'
+  # auto = detect CUDA → MPS → CPU at runtime
+  # Override with SYNQLAB_COMPUTE_DEVICE env var

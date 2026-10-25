@@ -1,0 +1,352 @@
+# ═══════════════════════════════════════════════════════════════════
+# SynqLab — Docker Compose
+#
+# Default stack (db + API + built frontend, NO migrations):
+#   docker compose up -d --build
+#
+# Run database migrations on demand (one-shot):
+#   docker compose --profile migrate run --rm migrate
+#
+#   …or bring up the full stack and let the migrate container run once:
+#     docker compose --profile migrate up -d --build
+#
+# Add all model/tool services (CPU):
+#   docker compose --profile tools up -d --build
+#
+# With NVIDIA GPUs for the model services:
+#   docker compose --profile tools \
+#     -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+#
+# Compose automatically loads `.env` from this directory. Copy
+# `.env.example` to `.env` and fill in OPENAI_API_KEY / JWT secret
+# before running `up` in anything resembling production.
+#
+# Stop:   docker compose down
+# ═══════════════════════════════════════════════════════════════════
+
+# Variables consumed below; missing values become empty strings
+# instead of failing `compose config`.
+x-app-env: &app-env
+  SYNQLAB_DB_URL: postgresql://synqlab:synqlab@db:5432/synqlab
+  SYNQLAB_LOG_LEVEL: ${SYNQLAB_LOG_LEVEL:-INFO}
+  SYNQLAB_JWT_SECRET: ${SYNQLAB_JWT_SECRET:-dev-insecure-change-me}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  SYNQLAB_PROTGPT2_URL: http://protgpt2-svc:8001
+  SYNQLAB_OMEGAFOLD_URL: http://omegafold-svc:8002
+  SYNQLAB_FOLDX_URL: http://foldx-svc:8003
+  SYNQLAB_RERANKER_URL: http://reranker-svc:8004
+  SYNQLAB_ESMFOLD_URL: http://esmfold-svc:8005
+  SYNQLAB_PROTEINMPNN_URL: http://proteinmpnn-svc:8006
+  SYNQLAB_BRIGHTNESS_URL: http://brightness-svc:8007
+  SYNQLAB_ARTIFACT_DIR: /app/data/agent_artifacts
+  SYNQLAB_FOLDX_BINARY_PATH: /app/data/tools/foldx5_Linux/foldx_20270131
+  SYNQLAB_FOLD_TIMEOUT_S: ${SYNQLAB_FOLD_TIMEOUT_S:-3600}
+  SYNQLAB_FOLDX_TIMEOUT_S: ${SYNQLAB_FOLDX_TIMEOUT_S:-900}
+
+services:
+  # ─── Database ──────────────────────────────────────────────
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: synqlab
+      POSTGRES_USER: synqlab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-synqlab}
+    # Bind to localhost only — prevents accidental exposure of the
+    # dev DB on a shared network. Override by setting DB_BIND=0.0.0.0
+    # in your .env when you actually need remote access.
+    ports:
+      - "${DB_BIND:-127.0.0.1}:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U synqlab -d synqlab" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Database Migrations (one-shot, opt-in) ─────────────────
+  # Gated behind the `migrate` profile so migrations don't run on every
+  # `docker compose up`. Run explicitly when you change schema:
+  #   docker compose --profile migrate run --rm migrate
+  migrate:
+    profiles: [ "migrate" ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    image: synqlab-app:local
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: [ "alembic", "upgrade", "head" ]
+    restart: "no"
+
+  # ─── API + built Frontend (single container) ───────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    image: synqlab-app:local
+    restart: unless-stopped
+    ports:
+      - "${APP_BIND:-0.0.0.0}:8000:8000"
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../registry:/registry:ro
+      - artifacts_data:/app/artifacts
+      # Mount local frontend build so `npx vite build` is reflected instantly
+      - ./app/static/dist:/app/app/static/dist:ro
+      # Mount Python code for hot reload during development
+      - ./app:/app/app:ro
+      - ./synqlab:/app/synqlab:ro
+      # Bundled PDB samples (source of truth, git-tracked)
+      - ./data/agent_artifacts/bundled:/app/data/agent_artifacts/bundled:ro
+      # Phase 13: shared with all path-consuming tool services — keep in sync.
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+      # Training: scripts module + shared model volume + uploaded datasets
+      - ./scripts:/app/scripts:ro
+      - brightness_cache:/app/models
+      - ./data/training_datasets:/app/data/training_datasets
+    # Fix volume ownership on first boot — Docker named volumes are
+    # created as root, but the app runs as synqlab (UID 1000).
+    user: "root"
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        mkdir -p /app/data/user_media/avatars /app/data/user_media/org_avatars /app/data/user_media/team_avatars
+        mkdir -p /app/models/brightness /app/data/training_datasets
+        chown -R 1000:1000 /app/data /app/models /app/data/training_datasets
+        exec su -s /bin/bash synqlab -c 'uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1'
+    healthcheck:
+      # Use /healthz (lightweight) instead of /api/health (probes all services)
+      test: [ "CMD", "curl", "-fsS", "http://localhost:8000/healthz" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ═══════════════════════════════════════════════════════════════
+  # Model Services
+  # ═══════════════════════════════════════════════════════════════
+
+  # ─── ProtGPT2 Inference Service ────────────────────────────
+  protgpt2-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/protgpt2/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    shm_size: '2gb'
+    environment:
+      DEVICE: cpu
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - hf_cache:/app/.cache/huggingface
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+      - ./synqlab:/app/synqlab:ro
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── OmegaFold Inference Service ───────────────────────────
+  omegafold-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/omegafold/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    shm_size: '2gb'
+    environment:
+      DEVICE: cpu
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - omegafold_cache:/app/.cache/omegafold_ckpt
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+      - ./synqlab:/app/synqlab:ro
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 600s
+
+  # ─── FoldX Scoring Service (CPU only) ──────────────────────
+  foldx-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/foldx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      SYNQLAB_FOLDX_BINARY_PATH: /opt/foldx/foldx_20270131
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+    volumes:
+      - artifacts_data:/app/artifacts
+      # Mount FoldX binary (git-tracked in data/tools/)
+      - ./data/tools/foldx5_Linux:/opt/foldx:ro
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── Reranker Scoring Service (CPU only) ───────────────────
+  reranker-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/reranker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8004:8004"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8004/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── ESMFold Inference Service ──────────────────────────────
+  esmfold-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/esmfold/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8005:8005"
+    shm_size: '4gb'
+    environment:
+      DEVICE: cpu
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 24g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - esmfold_cache:/app/.cache/torch/hub
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8005/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 600s
+
+  # ─── ProteinMPNN Inverse Folding Service (CPU only) ────────
+  proteinmpnn-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/proteinmpnn/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8006:8006"
+    environment:
+      DEVICE: cpu
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8006/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── Brightness Scoring Service (CPU only, Phase 23) ────────
+  brightness-svc:
+    profiles: [ "tools" ]
+    build:
+      context: .
+      dockerfile: services/brightness/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8007:8007"
+    environment:
+      DEVICE: cpu
+      SYNQLAB_BRIGHTNESS_MODEL_PATH: ${SYNQLAB_BRIGHTNESS_MODEL_PATH:-/app/models/brightness/model.pkl}
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4g
+    volumes:
+      - artifacts_data:/app/artifacts
+      - brightness_cache:/app/models
+      - ./data/agent_artifacts:/app/data/agent_artifacts
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8007/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── Test Database (use with: docker compose --profile test up) ─
+  db_test:
+    profiles: [ "test" ]
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: synqlab_test
+      POSTGRES_USER: synqlab
+      POSTGRES_PASSWORD: ${POSTGRES_TEST_PASSWORD:-synqlab}
+    ports:
+      - "${DB_BIND:-127.0.0.1}:5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U synqlab -d synqlab_test" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  postgres_test_data:
+  artifacts_data:
+  hf_cache:
+  omegafold_cache:
+  esmfold_cache:
+  brightness_cache:

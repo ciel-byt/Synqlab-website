@@ -1,0 +1,45 @@
+{{/*
+  KEDA ScaledObject Template (CPU + Cron)
+  ───────────────────────────────────────
+
+  - CPU trigger: horizontal scaling (1→N) based on load
+  - Cron trigger: scale to 0 during off-hours
+
+  Work hours:  8 AM – 1 AM EST  (covers EST team + PDT user until 10 PM)
+  Off-hours:   1 AM – 8 AM EST  (7h downtime, ~$0)
+*/}}
+{{- range $name, $tool := .Values.tools }}
+{{- if and $tool.enabled (default false $tool.scaleToZero) }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "synqlab.fullname" $ }}-{{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" $ | nindent 4 }}
+    {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 4 }}
+    synqlab.io/tier: tool
+spec:
+  scaleTargetRef:
+    name: {{ include "synqlab.fullname" $ }}-{{ $name }}
+  idleReplicaCount: 0               # when no cron active → scale to 0
+  minReplicaCount: 0
+  maxReplicaCount: {{ default 1 $tool.replicaCount }}
+  cooldownPeriod: {{ default 300 $tool.idleTimeoutSeconds }}
+  pollingInterval: 30
+  triggers:
+    # ── Work hours: 8 AM – 1 AM EST (covers EST + PDT teams) ──
+    - type: cron
+      metadata:
+        timezone: America/New_York
+        start: 0 8 * * *             # 8 AM EST (team starts)
+        end: 0 1 * * *               # 1 AM EST (= 10 PM PDT)
+        desiredReplicas: "1"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "50"
+    # Off-hours (1 AM – 8 AM EST): no cron active → idleReplicaCount: 0
+{{- end }}
+{{- end }}

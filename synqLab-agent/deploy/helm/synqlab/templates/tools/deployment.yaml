@@ -1,0 +1,177 @@
+{{/*
+  Generic Tool Deployment Template
+  ──────────────────────────────────
+
+  Iterates over .Values.tools and creates a Deployment for each enabled tool.
+  Adding a new tool = adding an entry to values.yaml. No template changes needed.
+
+  Supports: GPU toggle, custom volumes, custom env, pod annotations,
+            startup/liveness/readiness probes, security context.
+*/}}
+{{- range $name, $tool := .Values.tools }}
+{{- if $tool.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "synqlab.fullname" $ }}-{{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" $ | nindent 4 }}
+    {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 4 }}
+    synqlab.io/tier: tool
+spec:
+  replicas: {{ $tool.replicaCount | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "synqlab.labels" $ | nindent 8 }}
+        {{- include "synqlab.selectorLabels" (dict "component" $name "root" $) | nindent 8 }}
+        synqlab.io/tier: tool
+      annotations:
+        # Phase 13: every tool now mounts the shared `agent-artifacts` GCS Fuse
+        # volume (RESEARCH Pitfall #1 fix), so the GKE CSI annotations are
+        # required on every tool pod regardless of $tool.artifacts.gcs.
+        gke-gcsfuse/volumes: "true"
+        gke-gcsfuse/cpu-limit: "0"
+        gke-gcsfuse/memory-limit: "256Mi"
+        gke-gcsfuse/ephemeral-storage-limit: "1Gi"
+        {{- if $tool.podAnnotations }}
+        {{- toYaml $tool.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "synqlab.serviceAccountName" $ }}
+      terminationGracePeriodSeconds: 15
+      securityContext:
+        {{- include "synqlab.podSecurityContext" $ | nindent 8 }}
+
+      # ── Schedule on ML node pool (tainted, scales 0→1) ───────
+      nodeSelector:
+        pool: ml
+        {{- if and (hasKey $tool "gpu") $tool.gpu.enabled }}
+        cloud.google.com/gke-accelerator: {{ $tool.gpu.type }}
+        {{- end }}
+      tolerations:
+        - key: synqlab/ml-pool
+          operator: Equal
+          value: "true"
+          effect: NoExecute
+        {{- if and (hasKey $tool "gpu") $tool.gpu.enabled }}
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+        {{- end }}
+
+      containers:
+        - name: {{ $name }}
+          image: {{ include "synqlab.image" (dict "image" $tool.image "registry" $.Values.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            {{- include "synqlab.containerSecurityContext" $ | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $tool.port }}
+              protocol: TCP
+
+          # ── Environment ──────────────────────────────────────
+          env:
+            - name: DEVICE
+              value: {{ if and (hasKey $tool "gpu") $tool.gpu.enabled }}"cuda"{{ else }}"cpu"{{ end }}
+            {{- range $k, $v := $tool.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+
+          # ── Probes ───────────────────────────────────────────
+          {{- if $tool.probes }}
+          {{- if $tool.probes.startup }}
+          startupProbe:
+            httpGet:
+              path: {{ $tool.probes.startup.path }}
+              port: http
+            failureThreshold: {{ $tool.probes.startup.failureThreshold }}
+            periodSeconds: {{ $tool.probes.startup.periodSeconds }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ $tool.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ $tool.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $tool.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ $tool.probes.liveness.timeoutSeconds | default 5 }}
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ $tool.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ $tool.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $tool.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ $tool.probes.readiness.timeoutSeconds | default 5 }}
+            failureThreshold: 3
+          {{- end }}
+
+          # ── Resources ────────────────────────────────────────
+          resources:
+            requests:
+              {{- toYaml $tool.resources.requests | nindent 14 }}
+              {{- if and (hasKey $tool "gpu") $tool.gpu.enabled }}
+              nvidia.com/gpu: {{ $tool.gpu.count | default 1 | quote }}
+              {{- end }}
+            limits:
+              {{- toYaml $tool.resources.limits | nindent 14 }}
+              {{- if and (hasKey $tool "gpu") $tool.gpu.enabled }}
+              nvidia.com/gpu: {{ $tool.gpu.count | default 1 | quote }}
+              {{- end }}
+
+          # ── Volumes ──────────────────────────────────────────
+          volumeMounts:
+            - name: data-models
+              mountPath: /app/data/models
+            # Phase 13: shared sub-directory mounted by gateway too; closes the
+            # cross-service file-read gap for path-consuming tools (foldx,
+            # proteinmpnn, omegafold, esmfold, protgpt2). RESEARCH Pitfall #1.
+            - name: agent-artifacts
+              mountPath: /app/data/agent_artifacts
+            - name: tmp
+              mountPath: /tmp
+            {{- if $tool.extraVolumeMounts }}
+            {{- toYaml $tool.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+
+      volumes:
+        - name: data-models
+          {{- if and $tool.artifacts $tool.artifacts.gcs }}
+          csi:
+            driver: gcsfuse.csi.storage.gke.io
+            volumeAttributes:
+              bucketName: {{ $.Values.gcs.assetsBucket | quote }}
+              mountOptions: "only-dir=data/models/,implicit-dirs,uid=1000,gid=1000"
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        # Phase 13: ALWAYS GCS Fuse against the assets bucket's
+        # `agent_artifacts/` sub-dir. Unlike `artifacts` above, this volume
+        # MUST be shared with the gateway pod — emptyDir is the bug we're
+        # fixing here.
+        - name: agent-artifacts
+          csi:
+            driver: gcsfuse.csi.storage.gke.io
+            volumeAttributes:
+              bucketName: {{ $.Values.gcs.assetsBucket | quote }}
+              mountOptions: "only-dir=agent_artifacts/,implicit-dirs,uid=1000,gid=1000"
+        - name: tmp
+          emptyDir: {}
+        {{- if $tool.extraVolumes }}
+        {{- toYaml $tool.extraVolumes | nindent 8 }}
+        {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,19 @@
+# Brightness service dependencies
+# Core
+fastapi
+uvicorn
+
+# Shared schemas
+pyyaml
+pydantic
+
+# ML dependencies for brightness model
+scikit-learn
+numpy
+torch
+transformers
+scipy
+
+# Dataset loading (for in-container training)
+pandas
+openpyxl

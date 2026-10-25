@@ -1,0 +1,160 @@
+# ═══════════════════════════════════════════════════════════════════
+# SynqLab — Test Suite (CI)
+#
+# Runs on every push and PR. Executes unit, integration, and E2E tests.
+# ═══════════════════════════════════════════════════════════════════
+
+name: Tests
+
+on:
+  # Push: run on main/develop and feat branches
+  push:
+    branches: [main, develop, 'feat/**']
+    paths:
+      - 'Dockerfile'
+      - 'services/**'
+      - 'synqlab/**'
+      - 'app/**'
+      - 'tests/**'
+      - 'evals/**'
+      - 'frontend/**'
+      - 'configs/**'
+      - 'deploy/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements*.txt'
+      - '.github/workflows/test.yml'
+      - '.github/workflows/build-push.yml'
+  # Pull request: runs on PRs to main/develop (covers feat/** branches)
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Dockerfile'
+      - 'services/**'
+      - 'synqlab/**'
+      - 'app/**'
+      - 'tests/**'
+      - 'evals/**'
+      - 'frontend/**'
+      - 'configs/**'
+      - 'deploy/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements*.txt'
+      - '.github/workflows/test.yml'
+      - '.github/workflows/build-push.yml'
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    services:
+      # Postgres for integration tests (optional — tests can use SQLite)
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: synqlab
+          POSTGRES_PASSWORD: synqlab
+          POSTGRES_DB: synqlab_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U synqlab -d synqlab_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # Use SQLite for most tests (fast, no external deps)
+      SYNQLAB_DB_URL: sqlite:///./test.db
+      SYNQLAB_JWT_SECRET: test-secret-for-ci
+      # Disable OpenAI calls in tests (mocked)
+      OPENAI_API_KEY: test-key-not-used
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras --dev
+          # Ensure test dependencies are available
+          uv pip install pytest pytest-cov pytest-asyncio httpx
+
+      - name: Run unit tests
+        run: |
+          # All unit tests except legacy V1 pipeline (superseded by new agent system)
+          uv run pytest tests/unit -v --tb=short --ignore=tests/unit/test_pipeline.py
+
+      - name: Run integration tests
+        run: |
+          uv run pytest tests/test_integration.py tests/test_concurrency.py -v --tb=short
+
+      - name: Run E2E API tests
+        run: |
+          uv run pytest tests/test_e2e_api.py -v --tb=short
+
+      - name: Run agent engine tests
+        run: |
+          uv run pytest tests/test_agent_engine.py tests/test_agent_tool.py tests/test_budget.py tests/test_guardrails.py tests/test_task.py tests/test_template.py tests/test_pipeline.py -v --tb=short
+
+      - name: Run artifact tests
+        run: |
+          uv run pytest tests/test_artifact_upload.py tests/test_artifact_promote.py tests/test_artifact_scope_endpoint.py tests/test_bundled_ingest.py -v --tb=short
+
+      - name: Run endpoint tests
+        run: |
+          uv run pytest tests/test_agents_datasets_endpoint.py -v --tb=short
+
+      - name: Run eval suite (tool selection)
+        run: |
+          uv run python evals/eval_tool_selection.py
+        continue-on-error: true  # Evals are informational, not blocking
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "### ✅ Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Python version: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+
+  # ─── Frontend Build Check ───────────────────────────────────────────
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type check & build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "### ✅ Frontend Build" >> $GITHUB_STEP_SUMMARY
+          ls -la app/static/dist/ >> $GITHUB_STEP_SUMMARY || echo "No dist output" >> $GITHUB_STEP_SUMMARY

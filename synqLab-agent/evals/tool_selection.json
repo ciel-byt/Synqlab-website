@@ -1,0 +1,152 @@
+[
+  {
+    "id": "ts-01",
+    "prompt": "Predict the 3D structure of the insulin protein sequence MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKT",
+    "expected_tools": ["predict_structure"],
+    "expected_args": {"sequence": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKT"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-02",
+    "prompt": "What is the stability of this mutation: A23G in MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKT",
+    "expected_tools": ["analyze_stability"],
+    "expected_args": {"mutations": "A23G"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-03",
+    "prompt": "Generate 5 variants of the GFP sequence optimized for thermal stability",
+    "expected_tools": ["generate_sequences"],
+    "expected_args": {"num_sequences": 5},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-04",
+    "prompt": "Search for recent papers on CRISPR-Cas9 gene editing efficiency",
+    "expected_tools": ["literature_search"],
+    "expected_args": {"query": "CRISPR-Cas9"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-05",
+    "prompt": "Fold this sequence and then analyze the stability of mutation G45A: MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH",
+    "expected_tools": ["predict_structure", "analyze_stability"],
+    "expected_args": {},
+    "category": "multi_tool"
+  },
+  {
+    "id": "ts-06",
+    "prompt": "Write a report summarizing the protein folding results for experiment EXP-001",
+    "expected_tools": ["write_report"],
+    "expected_args": {"title": "EXP-001"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-07",
+    "prompt": "Generate 10 variants of MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH then fold the top 3",
+    "expected_tools": ["generate_sequences", "predict_structure"],
+    "expected_args": {"num_sequences": 10},
+    "category": "multi_tool"
+  },
+  {
+    "id": "ts-08",
+    "prompt": "What tasks are currently running in this session?",
+    "expected_tools": ["list_tasks"],
+    "expected_args": {},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-09",
+    "prompt": "Save this PDB file as an artifact with the name 'insulin_structure.pdb'",
+    "expected_tools": ["save_artifact"],
+    "expected_args": {"filename": "insulin_structure.pdb"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-10",
+    "prompt": "Read the artifact named 'experiment_notes.md'",
+    "expected_tools": ["read_artifact"],
+    "expected_args": {"filename": "experiment_notes.md"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-11",
+    "prompt": "Design a protein binder for the ACE2 receptor using the research director protocol",
+    "expected_tools": ["activate_skill"],
+    "expected_args": {"skill_id": "research-director-protocol"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-12",
+    "prompt": "Analyze the effect of mutations K27R, E35D, and L40I on the hemoglobin sequence",
+    "expected_tools": ["analyze_stability"],
+    "expected_args": {"mutations": "K27R,E35D,L40I"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-13",
+    "prompt": "Find literature on AlphaFold2 accuracy for membrane proteins and then write a summary report",
+    "expected_tools": ["literature_search", "write_report"],
+    "expected_args": {},
+    "category": "multi_tool"
+  },
+  {
+    "id": "ts-14",
+    "prompt": "Spawn a worker to fold protein MVLSPADKTNVK while I continue the main analysis",
+    "expected_tools": ["spawn_worker"],
+    "expected_args": {"agent_type": "folding_worker"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-15",
+    "prompt": "Stop worker task abc-123",
+    "expected_tools": ["stop_task"],
+    "expected_args": {"task_id": "abc-123"},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-16",
+    "prompt": "List all available skills in the system",
+    "expected_tools": ["list_skills"],
+    "expected_args": {},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-17",
+    "prompt": "Fold these three sequences in parallel: MVLSPAD, MALWMRL, GFPSEQ",
+    "expected_tools": ["predict_structure"],
+    "expected_args": {},
+    "category": "multi_call_same_tool",
+    "notes": "Should call predict_structure 3 times or use batch approach"
+  },
+  {
+    "id": "ts-18",
+    "prompt": "Generate optimized variants, fold the best one, and analyze its stability against mutations D10A and K15E",
+    "expected_tools": ["generate_sequences", "predict_structure", "analyze_stability"],
+    "expected_args": {},
+    "category": "multi_tool_chain"
+  },
+  {
+    "id": "ts-19",
+    "prompt": "Send a message to the coordinator saying the folding analysis is complete",
+    "expected_tools": ["send_message"],
+    "expected_args": {},
+    "category": "single_tool"
+  },
+  {
+    "id": "ts-20",
+    "prompt": "Just explain what protein folding is. Don't use any tools.",
+    "expected_tools": [],
+    "expected_args": {},
+    "category": "no_tool",
+    "notes": "Agent should respond with text only, no tool calls"
+  },
+  {
+    "id": "ts-21",
+    "prompt": "Search for papers on de novo protein design with ProteinMPNN, then save the search results as an artifact called 'mpnn_literature.md'",
+    "expected_tools": ["search_literature", "save_artifact"],
+    "expected_args": {},
+    "category": "multi_tool",
+    "notes": "Covers literature → artifact chain not tested by other multi-tool cases (EVAL-REVIEW G7 closure)"
+  }
+]

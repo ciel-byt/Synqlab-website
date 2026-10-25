@@ -1,0 +1,435 @@
+{
+  "registry_version": "1.0.0",
+  "description": "Canonical tool registry for SynqLab. Each entry includes fetch URL, model size, and description for programmatic integration.",
+  "categories": {
+    "sequence_representation": {
+      "label": "Sequence Representation",
+      "purpose": "Encode amino acid sequences into embeddings capturing evolutionary, structural, and functional properties.",
+      "tools": [
+        {
+          "id": "esm1b",
+          "name": "ESM-1b",
+          "model_size": "650M parameters",
+          "fetch_url": "https://github.com/facebookresearch/esm",
+          "huggingface_id": "facebook/esm1b_t33_650M_UR50S",
+          "description": "Transformer protein language model trained on UniRef50. Produces per-residue and per-sequence embeddings. Strong baseline for downstream tasks.",
+          "license": "MIT"
+        },
+        {
+          "id": "esm2",
+          "name": "ESM-2",
+          "model_size": "8M / 35M / 150M / 650M / 3B / 15B parameters (multiple checkpoints)",
+          "fetch_url": "https://github.com/facebookresearch/esm",
+          "huggingface_id": "facebook/esm2_t33_650M_UR50D",
+          "description": "Updated ESM series with improved scaling and training. Recommended default for embeddings in SynqLab. The 650M checkpoint is a practical balance between quality and compute.",
+          "license": "MIT"
+        },
+        {
+          "id": "protbert",
+          "name": "ProtBERT",
+          "model_size": "420M parameters",
+          "fetch_url": "https://huggingface.co/Rostlab/prot_bert",
+          "huggingface_id": "Rostlab/prot_bert",
+          "description": "BERT-based model trained on BFD and UniRef100. Accepts space-separated amino acids. Useful for classification and embedding tasks.",
+          "license": "Academic (CC BY 4.0)"
+        },
+        {
+          "id": "prott5",
+          "name": "ProtT5-XL",
+          "model_size": "3B parameters (XL-UniRef50 variant)",
+          "fetch_url": "https://huggingface.co/Rostlab/prot_t5_xl_uniref50",
+          "huggingface_id": "Rostlab/prot_t5_xl_uniref50",
+          "description": "T5-based encoder-decoder trained on UniRef50. High-quality per-residue embeddings. Larger memory footprint; use fp16 or offloading for inference.",
+          "license": "MIT"
+        },
+        {
+          "id": "unirep",
+          "name": "UniRep",
+          "model_size": "~18M parameters (mLSTM)",
+          "fetch_url": "https://github.com/churchlab/UniRep",
+          "huggingface_id": null,
+          "description": "Multiplicative LSTM trained on UniRef50. One of the first transfer learning models for proteins. Lightweight; suitable for fast feature extraction.",
+          "license": "Apache 2.0"
+        },
+        {
+          "id": "tape",
+          "name": "TAPE",
+          "model_size": "Varies by backbone (BERT ~38M, LSTM ~30M, Transformer ~38M)",
+          "fetch_url": "https://github.com/songlab-cal/tape",
+          "huggingface_id": null,
+          "description": "Benchmarking suite with pretrained models (BERT, LSTM, Transformer, ResNet) for protein tasks. Useful for establishing baselines in SynqLab evaluations.",
+          "license": "MIT"
+        },
+        {
+          "id": "esm_if",
+          "name": "ESM-IF",
+          "model_size": "~142M parameters",
+          "fetch_url": "https://github.com/facebookresearch/esm",
+          "huggingface_id": "facebook/esm_if1_gvp4_t16_142M_UR50",
+          "description": "Inverse folding model from Meta. Also used as a structure-aware sequence encoder. Generates sequence likelihoods conditioned on backbone coordinates.",
+          "license": "MIT"
+        }
+      ]
+    },
+    "sequence_generation": {
+      "label": "Sequence Generation",
+      "purpose": "Generate novel protein or peptide sequences via language models or diffusion over sequence/structure space.",
+      "tools": [
+        {
+          "id": "progen",
+          "name": "ProGen",
+          "model_size": "1.2B parameters",
+          "fetch_url": "https://github.com/salesforce/progen",
+          "huggingface_id": "hugohrban/progen2-base",
+          "description": "Autoregressive protein language model conditioned on taxonomic and functional keywords. ProGen2 variants available at multiple scales. Suitable for conditional generation in SynqLab.",
+          "license": "BSD 3-Clause"
+        },
+        {
+          "id": "protgpt2",
+          "name": "ProtGPT2",
+          "model_size": "738M parameters",
+          "fetch_url": "https://huggingface.co/nferruz/ProtGPT2",
+          "huggingface_id": "nferruz/ProtGPT2",
+          "description": "GPT-2 trained on UniRef50 protein sequences. Unconditional generative model; outputs natural-like sequences. Easy to fine-tune with LoRA for task-specific generation.",
+          "license": "MIT"
+        },
+        {
+          "id": "evodiff",
+          "name": "EvoDiff",
+          "model_size": "640M parameters (OA-AR-600M checkpoint)",
+          "fetch_url": "https://github.com/microsoft/evodiff",
+          "huggingface_id": null,
+          "description": "Microsoft diffusion framework over protein sequences. Supports unconditional, motif-scaffolded, and inpaint generation. Good for diversity-controlled generation in exploration phases.",
+          "license": "MIT"
+        },
+        {
+          "id": "rfdiffusion",
+          "name": "RFdiffusion",
+          "model_size": "~47M parameters",
+          "fetch_url": "https://github.com/RosettaCommons/RFdiffusion",
+          "huggingface_id": null,
+          "description": "Diffusion model over protein backbone structure (not sequence). Generates backbone geometries de novo or around motifs; pair with ProteinMPNN to recover sequences. Key tool for structure-conditioned design.",
+          "license": "BSD 3-Clause"
+        },
+        {
+          "id": "pepmlm",
+          "name": "PepMLM",
+          "model_size": "~125M parameters",
+          "fetch_url": "https://github.com/programmablebio/pepmlm",
+          "huggingface_id": "ChatterjeeLab/PepMLM-650M",
+          "description": "Masked language model fine-tuned for peptide binder design conditioned on a target protein sequence. Directly relevant to GFP11 variant generation in SynqLab.",
+          "license": "MIT"
+        },
+        {
+          "id": "taxdiff",
+          "name": "TaxDiff",
+          "model_size": "~110M parameters",
+          "fetch_url": "https://github.com/luo-group/TaxDiff",
+          "huggingface_id": null,
+          "description": "Diffusion model conditioned on taxonomic labels to guide generation toward biologically plausible sequence families. Useful for diversity-controlled exploration.",
+          "license": "MIT"
+        }
+      ]
+    },
+    "structure_prediction": {
+      "label": "Structure Prediction",
+      "purpose": "Predict 3D atomic coordinates from amino acid sequence; model protein-protein and protein-ligand complexes.",
+      "tools": [
+        {
+          "id": "alphafold2",
+          "name": "AlphaFold2",
+          "model_size": "~93M parameters",
+          "fetch_url": "https://github.com/deepmind/alphafold",
+          "huggingface_id": null,
+          "description": "DeepMind's landmark structure predictor achieving near-experimental accuracy for single chains. Requires MSA and template search pipeline. High-confidence pLDDT and PAE scores used as evaluation metrics.",
+          "license": "Apache 2.0"
+        },
+        {
+          "id": "alphafold3",
+          "name": "AlphaFold3",
+          "model_size": "~300M parameters (estimated)",
+          "fetch_url": "https://github.com/google-deepmind/alphafold3",
+          "huggingface_id": null,
+          "description": "Extended to predict complexes involving proteins, nucleic acids, ligands, and small molecules. Uses diffusion-based structure generation internally. Broader scope than AF2.",
+          "license": "CC BY-NC-SA 4.0"
+        },
+        {
+          "id": "alphafold_multimer",
+          "name": "AlphaFold-Multimer",
+          "model_size": "~93M parameters (same backbone as AF2, fine-tuned for complexes)",
+          "fetch_url": "https://github.com/deepmind/alphafold",
+          "huggingface_id": null,
+          "description": "Fine-tuned AF2 for protein-protein complex prediction. Provides iPTM and pTM confidence scores used as in-silico proxies for interface quality in SynqLab evaluation.",
+          "license": "Apache 2.0"
+        },
+        {
+          "id": "rosettafold",
+          "name": "RoseTTAFold",
+          "model_size": "~50M parameters",
+          "fetch_url": "https://github.com/RosettaCommons/RoseTTAFold",
+          "huggingface_id": null,
+          "description": "Three-track network (1D sequence, 2D distance, 3D coordinates) from Baker lab. Faster than AF2 at inference; pairs well with RFdiffusion for full design pipelines.",
+          "license": "MIT"
+        },
+        {
+          "id": "esmfold",
+          "name": "ESMFold",
+          "model_size": "~690M (ESM-2 3B backbone + folding head)",
+          "fetch_url": "https://github.com/facebookresearch/esm",
+          "huggingface_id": "facebook/esmfold_v1",
+          "description": "Single-sequence structure predictor requiring no MSA. Very fast (seconds per sequence). Ideal for large-scale screening in SynqLab's triage step.",
+          "license": "MIT"
+        },
+        {
+          "id": "omegafold",
+          "name": "OmegaFold",
+          "model_size": "~73M parameters",
+          "fetch_url": "https://github.com/HeliXonProtein/OmegaFold",
+          "huggingface_id": null,
+          "description": "Single-sequence predictor using a protein language model foundation. No MSA or database lookup required. Fast alternative to ESMFold for screening.",
+          "license": "Apache 2.0"
+        },
+        {
+          "id": "openfold",
+          "name": "OpenFold",
+          "model_size": "~93M parameters (same architecture as AF2)",
+          "fetch_url": "https://github.com/aqlaboratory/openfold",
+          "huggingface_id": null,
+          "description": "Fully open-source reimplementation of AlphaFold2 with trainable weights. Enables fine-tuning and LoRA adaptation of AF2 components within SynqLab's closed-loop update step.",
+          "license": "Apache 2.0"
+        }
+      ]
+    },
+    "inverse_folding": {
+      "label": "Inverse Folding",
+      "purpose": "Design amino acid sequences compatible with a given 3D backbone structure.",
+      "tools": [
+        {
+          "id": "proteinmpnn",
+          "name": "ProteinMPNN",
+          "model_size": "~1.6M parameters",
+          "fetch_url": "https://github.com/dauparas/ProteinMPNN",
+          "huggingface_id": null,
+          "description": "Message-passing neural network operating on backbone graphs (Cα, N, C, O). High experimental success rates. Primary inverse folding tool in SynqLab for sequence recovery from RFdiffusion backbones.",
+          "license": "MIT"
+        },
+        {
+          "id": "ligandmpnn",
+          "name": "LigandMPNN",
+          "model_size": "~1.6M parameters",
+          "fetch_url": "https://github.com/dauparas/LigandMPNN",
+          "huggingface_id": null,
+          "description": "Extends ProteinMPNN to be aware of ligand and small molecule context at the binding site. Use when designing sequences around a known ligand or receptor pocket.",
+          "license": "MIT"
+        },
+        {
+          "id": "fold2seq",
+          "name": "Fold2Seq",
+          "model_size": "~30M parameters",
+          "fetch_url": "https://github.com/microsoft/fold2seq",
+          "huggingface_id": null,
+          "description": "Transformer-based inverse folding model from Microsoft. Generates sequence distributions given a fold. Alternative to ProteinMPNN for ablation studies.",
+          "license": "MIT"
+        },
+        {
+          "id": "densecpd",
+          "name": "DenseCPD",
+          "model_size": "~10M parameters",
+          "fetch_url": "https://github.com/Gonglab-THU/DenseCPD",
+          "huggingface_id": null,
+          "description": "Uses a 3D convolutional approach over voxelized protein environments for sequence design. Provides an alternative architecture for inverse folding.",
+          "license": "MIT"
+        }
+      ]
+    },
+    "docking": {
+      "label": "Interaction Prediction / Docking",
+      "purpose": "Predict binding poses and interaction modes between proteins, peptides, and ligands.",
+      "tools": [
+        {
+          "id": "diffdock",
+          "name": "DiffDock",
+          "model_size": "~20M parameters",
+          "fetch_url": "https://github.com/gcorso/DiffDock",
+          "huggingface_id": null,
+          "description": "Diffusion generative model for protein-ligand docking. Frames docking as a generative problem over ligand pose space. Strong benchmark results; fast inference.",
+          "license": "MIT"
+        },
+        {
+          "id": "diffdock_pp",
+          "name": "DiffDock-PP",
+          "model_size": "~20M parameters",
+          "fetch_url": "https://github.com/ketatam/DiffDock-PP",
+          "huggingface_id": null,
+          "description": "Extension of DiffDock for rigid protein-protein docking. Directly relevant to GFP11/GFP1-10 complex prediction in SynqLab.",
+          "license": "MIT"
+        },
+        {
+          "id": "rosettadock",
+          "name": "RosettaDock",
+          "model_size": "N/A (physics-based)",
+          "fetch_url": "https://www.rosettacommons.org/software",
+          "huggingface_id": null,
+          "description": "Classical physics-based docking within the Rosetta suite. Optimizes interface energy; can incorporate experimental constraints (e.g., NMR, SAXS). Reference method for benchmarking.",
+          "license": "Academic free / Commercial license"
+        },
+        {
+          "id": "autodock_vina",
+          "name": "AutoDock Vina",
+          "model_size": "N/A (physics-based)",
+          "fetch_url": "https://github.com/ccsb-scripps/AutoDock-Vina",
+          "huggingface_id": null,
+          "description": "Widely used open-source small-molecule docking tool. Fast and well-validated. Useful for protein-ligand docking tasks in SynqLab pipelines.",
+          "license": "Apache 2.0"
+        },
+        {
+          "id": "haddock",
+          "name": "HADDOCK",
+          "model_size": "N/A (physics-based with data-driven restraints)",
+          "fetch_url": "https://wenmr.science.uu.nl/haddock2.4/",
+          "huggingface_id": null,
+          "description": "Data-driven docking platform that integrates experimental restraints (mutagenesis, NMR, cryo-EM). Web server and local install available. Good for complex modeling with prior knowledge.",
+          "license": "Academic free"
+        },
+        {
+          "id": "equibind",
+          "name": "EquiBind",
+          "model_size": "~1.7M parameters",
+          "fetch_url": "https://github.com/HannesStark/EquiBind",
+          "huggingface_id": null,
+          "description": "Geometric deep learning model for direct-shot protein-ligand binding structure prediction. Very fast (milliseconds). Use for large-scale screening before expensive physics-based docking.",
+          "license": "MIT"
+        },
+        {
+          "id": "tankbind",
+          "name": "TankBind",
+          "model_size": "~5M parameters",
+          "fetch_url": "https://github.com/luwei0917/TankBind",
+          "huggingface_id": null,
+          "description": "Trigonometry-aware non-local network for protein-ligand binding prediction. Predicts binding site and pose simultaneously. Competitive with DiffDock on several benchmarks.",
+          "license": "MIT"
+        }
+      ]
+    },
+    "property_prediction": {
+      "label": "Property Prediction / Scoring",
+      "purpose": "Evaluate thermodynamic stability, binding affinity, and mutational effects to rank and triage candidates.",
+      "tools": [
+        {
+          "id": "foldx",
+          "name": "FoldX",
+          "model_size": "N/A (physics-based force field)",
+          "fetch_url": "https://foldxsuite.crg.eu/",
+          "huggingface_id": null,
+          "description": "Empirical force field for fast ΔΔG prediction of mutations and interactions. Industry standard for stability estimation. Requires registration for academic use.",
+          "license": "Academic free / Commercial license"
+        },
+        {
+          "id": "rosetta3",
+          "name": "Rosetta3",
+          "model_size": "N/A (physics-based)",
+          "fetch_url": "https://www.rosettacommons.org/software",
+          "huggingface_id": null,
+          "description": "Comprehensive macromolecular modeling suite. Provides energy scoring (Rosetta energy units), design, and docking. Reference tool for stability and affinity scoring.",
+          "license": "Academic free / Commercial license"
+        },
+        {
+          "id": "pyrosetta",
+          "name": "PyRosetta",
+          "model_size": "N/A (Python bindings to Rosetta3)",
+          "fetch_url": "https://www.pyrosetta.org/",
+          "huggingface_id": null,
+          "description": "Python API wrapping the Rosetta3 suite. Enables programmatic scoring, minimization, and design. The primary interface for integrating Rosetta into SynqLab pipelines.",
+          "license": "Academic free / Commercial license"
+        },
+        {
+          "id": "deepddg",
+          "name": "DeepDDG",
+          "model_size": "~3M parameters",
+          "fetch_url": "https://github.com/guyujun/deepddg",
+          "huggingface_id": null,
+          "description": "Neural network predicting ΔΔG of protein stability upon single-point mutations from sequence and structural features. Fast alternative to FoldX for large mutational scanning.",
+          "license": "MIT"
+        },
+        {
+          "id": "mcsm",
+          "name": "mCSM",
+          "model_size": "N/A (graph-based, not a neural network)",
+          "fetch_url": "https://biosig.lab.uq.edu.au/mcsm/",
+          "huggingface_id": null,
+          "description": "Graph-based signature approach for predicting mutation effects on stability and protein-protein interactions. Available as a web server and standalone tool.",
+          "license": "Academic free"
+        },
+        {
+          "id": "dynamut",
+          "name": "DynaMut",
+          "model_size": "N/A (ensemble of Normal Mode Analysis + graph signatures)",
+          "fetch_url": "https://biosig.lab.uq.edu.au/dynamut/",
+          "huggingface_id": null,
+          "description": "Combines normal mode analysis with mCSM graph signatures to predict stability changes from mutations. Captures dynamic flexibility effects not modeled by static energy functions.",
+          "license": "Academic free"
+        },
+        {
+          "id": "graphsite",
+          "name": "GraphSite",
+          "model_size": "~2M parameters",
+          "fetch_url": "https://github.com/shiwentao00/Graphsite",
+          "huggingface_id": null,
+          "description": "Graph neural network for binding site prediction from protein structure. Used in SynqLab to identify candidate interaction surfaces before docking.",
+          "license": "MIT"
+        }
+      ]
+    },
+    "molecular_simulation": {
+      "label": "Molecular Simulation",
+      "purpose": "Run physics-based MD simulations to validate structural stability and conformational dynamics beyond static structure prediction.",
+      "tools": [
+        {
+          "id": "gromacs",
+          "name": "GROMACS",
+          "model_size": "N/A (MD engine)",
+          "fetch_url": "https://www.gromacs.org/",
+          "huggingface_id": null,
+          "description": "High-performance MD engine optimized for biomolecular simulations. Widely used GPU-accelerated option. Default simulation backend in SynqLab for top-k candidate validation.",
+          "license": "LGPL v2.1"
+        },
+        {
+          "id": "openmm",
+          "name": "OpenMM",
+          "model_size": "N/A (MD engine)",
+          "fetch_url": "https://github.com/openmm/openmm",
+          "huggingface_id": null,
+          "description": "Python-native MD library with flexible force field and integrator API. Ideal for programmatic integration into SynqLab pipelines. Supports CUDA, OpenCL, and CPU platforms.",
+          "license": "MIT"
+        },
+        {
+          "id": "namd",
+          "name": "NAMD",
+          "model_size": "N/A (MD engine)",
+          "fetch_url": "https://www.ks.uiuc.edu/Research/namd/",
+          "huggingface_id": null,
+          "description": "Parallel MD engine from UIUC. Highly scalable for large systems on HPC clusters. Supports CHARMM and AMBER force fields.",
+          "license": "UIUC Open Source (free for academic use)"
+        },
+        {
+          "id": "amber",
+          "name": "AMBER",
+          "model_size": "N/A (MD engine + force field suite)",
+          "fetch_url": "https://ambermd.org/",
+          "huggingface_id": null,
+          "description": "Comprehensive molecular dynamics package with widely validated AMBER force fields for proteins, nucleic acids, and small molecules. Commercial license required.",
+          "license": "Commercial / Academic license"
+        },
+        {
+          "id": "charmm",
+          "name": "CHARMM",
+          "model_size": "N/A (MD engine + force field suite)",
+          "fetch_url": "https://www.charmm.org/",
+          "huggingface_id": null,
+          "description": "Long-standing biomolecular simulation package with extensive scripting and analysis capabilities. The CHARMM force field is one of the most validated for protein simulations.",
+          "license": "Academic free / Commercial license"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: synqlab-frontend-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT
+{{- end }}

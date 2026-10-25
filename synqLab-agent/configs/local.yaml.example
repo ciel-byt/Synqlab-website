@@ -1,0 +1,14 @@
+# local.yaml — copy to local.yaml and fill in your values.
+# This file is gitignored once filled in.
+#
+# Override any key from base.yaml here.
+
+database:
+  url: "postgresql://synqlab:synqlab@localhost:5432/synqlab"
+
+experiment:
+  mock_mode: true   # Set to false to run real models
+
+tools:
+  foldx:
+    binary_path: ""   # Full path to the FoldX binary, e.g. /opt/foldx/foldx

@@ -1,0 +1,563 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* Design tokens (CSS variables, light + dark). */
+@import './styles/tokens.css';
+/* Named theme presets (override tokens via [data-theme]). */
+@import './styles/themes.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-color: hsl(var(--border));
+
+    /* Firefox — thin overlay scrollbar, invisible until hovered */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  *:hover {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+  }
+  *:active {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  }
+
+  /* Webkit (Chrome, Edge, Safari) — ultra-thin overlay scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999px;
+    transition: background 0.2s;
+  }
+  *:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.15);
+  }
+  *:hover::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+  *:hover::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--muted-foreground) / 0.45);
+  }
+
+  html, body, #root {
+    height: 100%;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+    text-rendering: optimizeLegibility;
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+
+  /* Page titles use the serif from the marketing site so the two feel like one product. */
+  h1, h2 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans text-sm;
+    font-weight: 400;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Focus-visible default — token-driven so it adapts in dark mode. */
+  :where(button, [role='button'], a, input, select, textarea):focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.6);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* Sidebar-specific: ultra-thin, auto-hide scrollbar */
+  [data-sidebar] ::-webkit-scrollbar,
+  [data-sidebar] ~ * ::-webkit-scrollbar { width: 3px; height: 3px; }
+  [data-sidebar] ::-webkit-scrollbar-thumb,
+  [data-sidebar] ~ * ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+    transition: background 0.2s;
+  }
+  [data-sidebar]:hover ::-webkit-scrollbar-thumb,
+  [data-sidebar] ~ *:hover ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.18);
+  }
+  [data-sidebar]:hover ::-webkit-scrollbar-thumb:hover,
+  [data-sidebar] ~ *:hover ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+
+  /* ── Sidebar mouse-tracking glow ─────────────────────────────── */
+  /* Radial gradient that follows the cursor via CSS custom props.
+     JS sets --mouse-x / --mouse-y on mousemove; pure GPU composite. */
+
+  [data-sidebar="sidebar"] {
+    --mouse-x: 50%;
+    --mouse-y: 50%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  [data-sidebar="sidebar"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(
+      320px circle at var(--mouse-x) var(--mouse-y),
+      hsla(var(--glass-bg) / 0.07) 0%,
+      hsla(var(--glass-bg) / 0.03) 35%,
+      transparent 70%
+    );
+  }
+  .dark [data-sidebar="sidebar"]::before {
+    background: radial-gradient(
+      320px circle at var(--mouse-x) var(--mouse-y),
+      hsla(var(--glass-bg) / 0.10) 0%,
+      hsla(var(--glass-bg) / 0.04) 35%,
+      transparent 70%
+    );
+  }
+  [data-sidebar="sidebar"]:hover::before {
+    opacity: 1;
+  }
+
+  /* Ensure sidebar children sit above the glow layer */
+  [data-sidebar="sidebar"] > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Inner sidebar (PageSidebar) — subtle theme-colored tint ──── */
+  .absolute[class*="bg-sidebar"] {
+    background: linear-gradient(
+      180deg,
+      hsla(var(--glass-bg) / 0.04) 0%,
+      hsla(var(--glass-bg) / 0.02) 60%,
+      transparent 100%
+    ), hsl(var(--sidebar-background));
+  }
+  .dark .absolute[class*="bg-sidebar"] {
+    background: linear-gradient(
+      180deg,
+      hsla(var(--glass-bg) / 0.06) 0%,
+      hsla(var(--glass-bg) / 0.03) 60%,
+      transparent 100%
+    ), hsl(var(--sidebar-background));
+  }
+
+  /* ── Content area mouse-tracking glow ────────────────────────── */
+  /* Gold warmth in light mode, soft teal in dark.
+     Larger radius + lower opacity for ambient feel. */
+
+  .content-glow {
+    --mouse-x: 50%;
+    --mouse-y: 50%;
+    position: relative;
+  }
+  .content-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    background: radial-gradient(
+      600px circle at var(--mouse-x) var(--mouse-y),
+      hsla(var(--glass-bg) / 0.04) 0%,
+      hsla(var(--glass-bg) / 0.015) 40%,
+      transparent 70%
+    );
+  }
+  .dark .content-glow::after {
+    background: radial-gradient(
+      600px circle at var(--mouse-x) var(--mouse-y),
+      hsla(var(--glass-bg) / 0.05) 0%,
+      hsla(var(--glass-bg) / 0.02) 40%,
+      transparent 70%
+    );
+  }
+  .content-glow:hover::after {
+    opacity: 1;
+  }
+  .content-glow > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Left-edge vignette — sidebar "casts" color into content */
+  .content-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      linear-gradient(
+        to right,
+        hsla(var(--glass-bg) / 0.035) 0%,
+        hsla(var(--glass-bg) / 0.012) 12%,
+        transparent 30%
+      ),
+      linear-gradient(
+        to bottom,
+        hsla(var(--glass-bg) / 0.02) 0%,
+        transparent 20%
+      );
+  }
+  .dark .content-glow::before {
+    background:
+      linear-gradient(
+        to right,
+        hsla(var(--glass-bg) / 0.05) 0%,
+        hsla(var(--glass-bg) / 0.02) 12%,
+        transparent 30%
+      ),
+      linear-gradient(
+        to bottom,
+        hsla(var(--glass-bg) / 0.03) 0%,
+        transparent 20%
+      );
+  }
+
+  /* ── Workspace table density ─────────────────────────────────── */
+  /* Consumes --ws-density from tokens.css / themes.css.
+     Targets table rows and cell padding inside workspace views. */
+
+  [data-density="compact"] table tbody tr td {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+  [data-density="compact"] table tbody tr td .text-sm {
+    font-size: 0.8125rem;
+  }
+  [data-density="compact"] table thead tr th {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  [data-density="comfortable"] table tbody tr td {
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+  }
+  [data-density="comfortable"] table thead tr th {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+}
+
+/* ── Auth page background ─────────────────────────────────────────── */
+
+@keyframes authBreathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes meshDrift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 40px 40px; }
+}
+
+.auth-page {
+  background: hsl(var(--background));
+}
+
+.auth-mesh {
+  background-image: radial-gradient(circle, hsla(var(--glass-bg) / 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: meshDrift 20s linear infinite;
+}
+.dark .auth-mesh {
+  background-image: radial-gradient(circle, hsla(var(--glass-bg) / 0.12) 1px, transparent 1px);
+}
+
+.auth-glow {
+  background:
+    radial-gradient(600px circle at 30% 20%, hsla(var(--glass-bg) / 0.08), transparent 60%),
+    radial-gradient(500px circle at 70% 80%, hsla(var(--glass-bg) / 0.06), transparent 60%);
+  animation: authBreathe 8s ease-in-out infinite;
+}
+.dark .auth-glow {
+  background:
+    radial-gradient(600px circle at 30% 20%, hsla(var(--glass-bg) / 0.12), transparent 60%),
+    radial-gradient(500px circle at 70% 80%, hsla(var(--glass-bg) / 0.08), transparent 60%);
+}
+
+.auth-card {
+  box-shadow:
+    0 0 0 1px hsla(var(--border) / 0.5),
+    0 4px 24px hsla(var(--foreground) / 0.06),
+    0 1px 3px hsla(var(--foreground) / 0.04);
+}
+
+@layer components {
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--surface-muted)) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+    @apply rounded h-3 mb-2;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border: 2px solid hsl(var(--muted-foreground) / 0.18);
+    border-top-color: hsl(var(--foreground));
+    border-radius: 50%;
+    animation: spin .55s linear infinite;
+    vertical-align: middle;
+  }
+  .spinner-white {
+    border-color: hsl(0 0% 100% / 0.3);
+    border-top-color: white;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+  }
+  .slide-in { animation: slideIn 0.2s ease-out; }
+
+  /* ── Sidebar chevron nudge — draws attention to expand ─────────── */
+  @keyframes chevronHint {
+    0%, 100% { opacity: 0.6; scale: 1; }
+    50%      { opacity: 1;   scale: 1.35; }
+  }
+  .animate-chevron-hint {
+    animation: chevronHint 1.6s ease-in-out infinite;
+  }
+
+  /* ── Page transition ────────────────────────────────────────────── */
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .page-enter {
+    animation: pageEnter 0.25s ease-out;
+  }
+
+  /* ── Active sidebar nav accent ──────────────────────────────────── */
+  [data-sidebar="menu-button"][data-active="true"] {
+    position: relative;
+  }
+  [data-sidebar="menu-button"][data-active="true"]::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 8px hsla(var(--primary) / 0.4);
+  }
+
+  /* ── Sub-button active bar — matches menu-button for consistency ── */
+  [data-sidebar="menu-sub-button"][data-active="true"] {
+    position: relative;
+  }
+  [data-sidebar="menu-sub-button"][data-active="true"]::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 3px;
+    bottom: 3px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 8px hsla(var(--primary) / 0.4);
+  }
+
+  /* ── Section-active: parent has a child selected ───────────────── */
+  /* Subtle muted tint + thin faded accent bar to show hierarchy     */
+  [data-sidebar="menu-button"][data-section-active="true"] {
+    position: relative;
+    background: hsla(var(--sidebar-accent) / 0.5);
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+  [data-sidebar="menu-button"][data-section-active="true"]::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 0 2px 2px 0;
+    background: hsla(var(--primary) / 0.3);
+  }
+
+  /* ── Button micro-animation ─────────────────────────────────────── */
+  .btn-pop {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-pop:hover {
+    transform: scale(1.02);
+  }
+  .btn-pop:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Depth / Shadow System ──────────────────────────────────────── */
+  /* Multi-layer shadows for premium depth perception                 */
+
+  .depth-1 {
+    box-shadow:
+      0 1px 2px hsla(var(--foreground) / 0.04),
+      0 1px 3px hsla(var(--foreground) / 0.06);
+  }
+  .depth-2 {
+    box-shadow:
+      0 1px 2px hsla(var(--foreground) / 0.03),
+      0 4px 8px -1px hsla(var(--foreground) / 0.06),
+      0 8px 16px -4px hsla(var(--foreground) / 0.04);
+  }
+  .depth-3 {
+    box-shadow:
+      0 1px 3px hsla(var(--foreground) / 0.03),
+      0 6px 12px -2px hsla(var(--foreground) / 0.06),
+      0 16px 32px -8px hsla(var(--foreground) / 0.08);
+  }
+  .depth-4 {
+    box-shadow:
+      0 2px 4px hsla(var(--foreground) / 0.02),
+      0 8px 16px -2px hsla(var(--foreground) / 0.06),
+      0 24px 48px -12px hsla(var(--foreground) / 0.1),
+      0 48px 80px -20px hsla(var(--foreground) / 0.04);
+  }
+
+  /* Inset shadow — recessed content well */
+  .depth-inset {
+    box-shadow:
+      inset 0 1px 4px hsla(var(--foreground) / 0.06),
+      inset 0 0 0 1px hsla(var(--foreground) / 0.02);
+  }
+
+  /* Hover depth escalation */
+  .depth-1:hover { box-shadow:
+    0 1px 2px hsla(var(--foreground) / 0.03),
+    0 4px 8px -1px hsla(var(--foreground) / 0.06),
+    0 8px 16px -4px hsla(var(--foreground) / 0.04);
+  }
+
+  /* Lift — card rises on hover */
+  .depth-lift {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .depth-lift:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 3px hsla(var(--foreground) / 0.03),
+      0 6px 12px -2px hsla(var(--foreground) / 0.06),
+      0 16px 32px -8px hsla(var(--foreground) / 0.08);
+  }
+
+  /* Edge shadow on sidebar divider — creates a lifted feel */
+  .sidebar-edge {
+    box-shadow:
+      1px 0 0 hsla(var(--border) / 1),
+      4px 0 12px -3px hsla(var(--foreground) / 0.05);
+  }
+
+  /* Interactive glow ring on hover */
+  .ring-glow:hover {
+    box-shadow:
+      0 0 0 1px hsla(var(--glass-bg) / 0.15),
+      0 0 12px -2px hsla(var(--glass-bg) / 0.12);
+  }
+
+  /* ── Glass / Frosted Firooze ───────────────────────────────────── */
+  /* Matte frosted glass — like a screen protector with turquoise tint */
+
+  .glass-subtle {
+    background: hsla(var(--glass-bg) / 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass {
+    background: hsla(var(--glass-bg) / var(--glass-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsla(var(--glass-bg) / var(--glass-border));
+  }
+
+  .glass-bold {
+    background: hsla(var(--glass-bg) / 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsla(var(--glass-bg) / 0.12);
+  }
+
+  /* Glass card — elevated panels with layered depth */
+  .glass-card {
+    background: hsla(var(--glass-bg) / var(--glass-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsla(var(--glass-bg) / var(--glass-border));
+    box-shadow:
+      0 0 0 1px hsla(var(--glass-bg) / 0.04),
+      0 1px 2px hsla(var(--foreground) / 0.03),
+      0 4px 12px -2px hsla(var(--foreground) / 0.05),
+      0 12px 24px -6px hsla(var(--glass-bg) / 0.06);
+  }
+
+  /* Glass header — sticky bar with depth */
+  .glass-header {
+    background: hsla(var(--background) / 0.8);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    border-bottom: 1px solid hsla(var(--glass-bg) / var(--glass-border));
+    box-shadow: 0 1px 3px hsla(var(--foreground) / 0.04);
+  }
+
+  /* Ambient firooze glow — for decorative background blobs */
+  .firooze-glow {
+    position: absolute;
+    border-radius: 50%;
+    background: hsla(var(--glass-bg) / 0.08);
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .dark .firooze-glow {
+    background: hsla(var(--glass-bg) / 0.06);
+  }
+}

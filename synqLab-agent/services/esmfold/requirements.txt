@@ -1,0 +1,15 @@
+# ESMFold service dependencies
+# Core
+fastapi
+uvicorn
+
+# ML inference
+torch
+fair-esm[esmfold]
+omegaconf
+modelcif
+ml-collections
+
+# Shared schemas
+pyyaml
+pydantic

@@ -1,0 +1,93 @@
+/* SynqLab theme. The ONLY place colors, fonts, radii and shadows are defined.
+   Layers: 1) palette (raw values)  2) semantic tokens (what things mean)  3) component tokens.
+   Components and JS read from layers 2 and 3. Change a value here and the whole site follows. */
+
+:root {
+  /* 1. Palette */
+  --pine-900: #14382c;
+  --pine-800: #163b2e;
+  --pine-700: #1f4d3d;
+  --pine-600: #2f6d55;
+  --pine-400: #6aa58f;
+  --pine-100: #e8f0ec;
+
+  --stone-950: #111312;
+  --stone-700: #3a3d3b;
+  --stone-500: #6b6f6c;
+  --stone-400: #9aa0a6;
+  --stone-300: #cfcfc8;
+  --stone-200: #e6e6e1;
+  --stone-100: #f6f6f3;
+  --white: #ffffff;
+
+  --amber-700: #6a5a16;
+  --amber-600: #b35a12;
+  --amber-500: #d9822b;
+  --amber-400: #e0b84a;
+  --amber-200: #e6d9a8;
+  --amber-100: #fbf6e0;
+
+  /* 2. Semantic tokens */
+  --brand: var(--pine-700);
+  --brand-hover: var(--pine-800);
+  --brand-deep: var(--pine-900);
+  --brand-mid: var(--pine-600);
+  --brand-light: var(--pine-400);
+  --brand-soft: var(--pine-100);
+
+  --bg: var(--white);
+  --bg-soft: var(--stone-100);
+  --surface: var(--white);
+  --ink: var(--stone-950);
+  --ink-soft: var(--stone-700);
+  --mute: var(--stone-500);
+  --line: var(--stone-200);
+  --line-strong: var(--stone-300);
+
+  --on-brand: var(--white);
+  --on-brand-muted: rgba(255, 255, 255, 0.82);
+  --on-brand-faint: rgba(255, 255, 255, 0.14);
+  --on-brand-border: rgba(255, 255, 255, 0.4);
+  --nav-bg: rgba(255, 255, 255, 0.88);
+  --overlay: rgba(10, 14, 12, 0.7);
+  --shadow: rgba(0, 0, 0, 0.08);
+
+  --success: var(--brand);
+  --warn: var(--amber-600);
+  --notice-bg: var(--amber-100);
+  --notice-line: var(--amber-200);
+  --notice-text: var(--amber-700);
+
+  /* Data viz: base vs ours, and the structure-confidence scale (very high to very low) */
+  --series-base: var(--stone-400);
+  --series-ours: var(--brand);
+  --conf-very-high: var(--pine-700);
+  --conf-high: var(--pine-400);
+  --conf-low: var(--amber-400);
+  --conf-very-low: var(--amber-500);
+  --target-chain: #c9ccc9;
+
+  /* Type roles */
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Shape and layout */
+  --radius-sm: 14px;
+  --radius: 24px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+  --max: 1280px;
+  --gutter: clamp(24px, 4vw, 64px);
+
+  /* 3. Component tokens */
+  --btn-bg: var(--brand);
+  --btn-bg-hover: var(--brand-hover);
+  --btn-fg: var(--on-brand);
+  --btn-outline: var(--brand);
+  --link-hover: var(--brand);
+  --focus-ring: var(--brand);
+  --icon-tile-bg: transparent;
+  --icon-tile-fg: var(--ink-soft);
+  --nav-h: 56px;
+}

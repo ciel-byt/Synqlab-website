@@ -1,0 +1,13 @@
+# ProtGPT2 service dependencies
+# Core
+fastapi
+uvicorn
+
+# ML inference
+torch
+transformers>=4.40
+huggingface-hub>=0.20
+
+# Shared schemas
+pyyaml
+pydantic

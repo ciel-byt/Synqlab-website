@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "synqlab.fullname" . }}-gateway
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+    {{- include "synqlab.selectorLabels" (dict "component" "gateway" "root" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.gateway.replicaCount }}
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      {{- include "synqlab.selectorLabels" (dict "component" "gateway" "root" .) | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        {{- include "synqlab.labels" . | nindent 8 }}
+        {{- include "synqlab.selectorLabels" (dict "component" "gateway" "root" .) | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/shared/configmap.yaml") . | sha256sum }}
+        gke-gcsfuse/volumes: "true"
+        gke-gcsfuse/cpu-limit: "0"
+        gke-gcsfuse/memory-limit: "256Mi"
+        gke-gcsfuse/ephemeral-storage-limit: "1Gi"
+    spec:
+      serviceAccountName: {{ include "synqlab.serviceAccountName" . }}
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        {{- include "synqlab.podSecurityContext" . | nindent 8 }}
+
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          securityContext:
+            {{- include "synqlab.containerSecurityContext" . | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL..."
+              until nc -z {{ include "synqlab.fullname" . }}-postgresql 5432; do
+                sleep 2
+              done
+              echo "PostgreSQL is ready."
+
+      containers:
+        - name: gateway
+          image: {{ include "synqlab.image" (dict "image" .Values.gateway.image "registry" .Values.imageRegistry) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            {{- include "synqlab.containerSecurityContext" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.gateway.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "synqlab.fullname" . }}-config
+            - secretRef:
+                name: {{ include "synqlab.fullname" . }}-secrets
+            # Externally-managed secret (created via kubectl, not Helm) — holds
+            # OPENAI_API_KEY and any other LLM provider creds. `optional: true`
+            # so pods still start in environments where it hasn't been created.
+            - secretRef:
+                name: synqlab-llm-secrets
+                optional: true
+          {{- if .Values.postgresql.enabled }}
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "synqlab.fullname" . }}-postgresql
+                  key: password
+            - name: SYNQLAB_DB_URL
+              value: {{ include "synqlab.databaseUrl" . | quote }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.gateway.probes.startup.path }}
+              port: http
+            failureThreshold: {{ .Values.gateway.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.gateway.probes.startup.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.gateway.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.gateway.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.gateway.probes.liveness.timeoutSeconds }}
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.gateway.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.gateway.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.gateway.probes.readiness.timeoutSeconds }}
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.gateway.resources | nindent 12 }}
+          volumeMounts:
+            - name: data-models
+              mountPath: /app/data/models
+            # Phase 13: shared with all path-consuming tool services — keep in sync.
+            - name: agent-artifacts
+              mountPath: /app/data/agent_artifacts
+            - name: model-weights
+              mountPath: /app/models
+            - name: tmp
+              mountPath: /tmp
+            - name: registry
+              mountPath: /registry
+              readOnly: true
+
+      volumes:
+        - name: data-models
+          csi:
+            driver: gcsfuse.csi.storage.gke.io
+            volumeAttributes:
+              bucketName: {{ .Values.gcs.assetsBucket | quote }}
+              mountOptions: "only-dir=data/models/,implicit-dirs,uid=1000,gid=1000"
+        # Phase 13: shared sub-directory of the assets bucket; tool deployments
+        # mount the same `agent_artifacts/` sub-dir so gateway-written PDBs are
+        # readable by foldx-svc / proteinmpnn-svc / etc. (RESEARCH Pitfall #1).
+        - name: agent-artifacts
+          csi:
+            driver: gcsfuse.csi.storage.gke.io
+            volumeAttributes:
+              bucketName: {{ .Values.gcs.assetsBucket | quote }}
+              mountOptions: "only-dir=agent_artifacts/,implicit-dirs,uid=1000,gid=1000"
+        - name: tmp
+          emptyDir: {}
+        - name: model-weights
+          csi:
+            driver: gcsfuse.csi.storage.gke.io
+            volumeAttributes:
+              bucketName: {{ .Values.gcs.assetsBucket | quote }}
+              mountOptions: "only-dir=models/,implicit-dirs,uid=1000,gid=1000"
+        - name: registry
+          configMap:
+            name: {{ include "synqlab.fullname" . }}-registry
+
+

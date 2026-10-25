@@ -4,3 +4,12 @@ __pycache__/
 *.pyc
 .env
 backend/.venv/
+.local/
+.DS_Store
+*.swp
+.venv/
+.pytest_cache/
+synqLab-agent/data/
+synqLab-agent/app/static/dist/
+synqLab-agent/app/static/site/
+synqLab-agent/artifacts/

@@ -1,0 +1,12 @@
+# ProteinMPNN service dependencies
+# Core
+fastapi
+uvicorn
+
+# ML inference (ProteinMPNN needs only PyTorch + NumPy)
+torch
+numpy
+
+# Shared schemas
+pyyaml
+pydantic

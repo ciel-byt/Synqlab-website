@@ -1,0 +1,13 @@
+HEADER    PHASE 13 TEST FIXTURE                   01-MAY-26   TEST
+TITLE     SAMPLE PDB FOR ARTIFACT UPLOAD TESTS
+ATOM      1  N   ALA A   1      11.104  13.207  10.500  1.00 20.00           N
+ATOM      2  CA  ALA A   1      11.804  14.207  11.300  1.00 20.00           C
+ATOM      3  C   ALA A   1      13.300  14.000  11.000  1.00 20.00           C
+ATOM      4  O   ALA A   1      13.800  12.900  10.700  1.00 20.00           O
+ATOM      5  CB  ALA A   1      11.500  15.600  10.800  1.00 20.00           C
+ATOM      6  N   GLY A   2      14.000  15.100  11.100  1.00 20.00           N
+ATOM      7  CA  GLY A   2      15.400  15.000  10.700  1.00 20.00           C
+ATOM      8  C   GLY A   2      16.200  16.200  11.100  1.00 20.00           C
+ATOM      9  O   GLY A   2      15.700  17.300  10.900  1.00 20.00           O
+TER      10      GLY A   2
+END

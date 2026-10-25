@@ -1,0 +1,50 @@
+{{- if .Values.networkPolicy.enabled }}
+# ── Allow gateway → tools, deny tool → tool ──────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "synqlab.fullname" . }}-tools-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+spec:
+  # Apply to all tool pods
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: synqlab
+      synqlab.io/tier: tool
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only allow traffic from the gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: gateway
+      ports:
+        {{- range $name, $tool := .Values.tools }}
+        {{- if $tool.enabled }}
+        - protocol: TCP
+          port: {{ $tool.port }}
+        {{- end }}
+        {{- end }}
+---
+# ── Allow external → gateway (via Ingress LB) ────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "synqlab.fullname" . }}-gateway-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "synqlab.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.gateway.port }}
+{{- end }}

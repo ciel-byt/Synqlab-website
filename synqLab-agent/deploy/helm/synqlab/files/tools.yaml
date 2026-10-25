@@ -1,0 +1,1081 @@
+# SynqLab Tool Registry
+#
+# Single catalogue of every SynqLab tool. There is no V1/V2 split — the product
+# is one system. A tool's maturity is given by its `status`:
+#
+#   active   — has a working adapter; callable in the live pipeline today
+#   planned  — scoped and designed; adapter present or in progress
+#
+# Tools under "Catalogue" are long-horizon references (no adapter yet). The
+# registry loader (synqlab/registry/loader.py) skips entries without an
+# `adapter` at runtime, so catalogue tools stay documented here without being
+# loaded. Helm mounts this file at /registry/tools.yaml.
+
+description: >
+  Unified tool registry for SynqLab: implemented adapters, scoped tools, and the
+  long-horizon catalogue, all distinguished by per-tool `status`.
+
+tools:
+
+  - id: protgpt2
+    name: ProtGPT2
+    category: sequence_generation
+    status: active
+    adapter: adapters/protgpt2.py
+    adapter_class: ProtGPT2Adapter
+    execution_mode: sync
+    description: >
+      Unconditional autoregressive protein sequence generator.
+      Used in V1 as the only generation source.
+    abstract: >
+      ProtGPT2 is a language model trained on the UniRef50 protein sequence database
+      using a GPT-2 architecture. It generates de novo protein sequences in a purely
+      autoregressive, unconditional manner — no target structure or function is required
+      at inference time. The model captures the statistical regularities of natural
+      proteins across all kingdoms of life, producing sequences that fold into globular
+      structures with properties comparable to natural proteins. Published in
+      Nature Biotechnology (2022) by Ferruz et al.
+    meta:
+      architecture: GPT-2 (transformer, autoregressive)
+      parameters: "738M"
+      training_data: UniRef50 (≈50M sequences)
+      published: "2022"
+      venue: Nature Biotechnology
+    capabilities:
+      - sequence_generation
+      - diverse_sampling
+    inputs:
+      - name: n_sequences
+        type: int
+        description: Number of candidate sequences to generate
+      - name: max_length
+        type: int
+        default: 100
+        description: Maximum token length per generated sequence
+      - name: temperature
+        type: float
+        default: 1.0
+        description: Sampling temperature — higher values increase diversity
+    outputs:
+      - name: sequences
+        type: list[str]
+        description: Generated amino acid sequences
+      - name: generation_metadata
+        type: artifact_json
+        description: Run metadata including timing and model config
+    examples:
+      - name: Quick sample
+        description: Generate 5 short sequences for rapid screening
+        inputs:
+          n_sequences: 5
+          max_length: 50
+          temperature: 1.0
+      - name: Diverse batch
+        description: High-temperature sampling for maximum diversity
+        inputs:
+          n_sequences: 20
+          max_length: 100
+          temperature: 1.2
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 1.5
+      ram_gb: 6
+      estimated_time_per_call: "2–5 min for 100 sequences on single GPU"
+    links:
+      paper: "https://www.nature.com/articles/s41587-022-01618-2"
+      model: "https://huggingface.co/nferruz/ProtGPT2"
+    tags: [generator, baseline]
+    notes: >
+      Preferred V1 generator. Laptop-friendly under reduced batch sizes.
+      Swap for PepMLM or RFdiffusion+ProteinMPNN in V2.
+
+  # ── STRUCTURE PREDICTION ────────────────────────────────────────────────────
+
+  - id: omegafold
+    name: OmegaFold
+    category: structure_prediction
+    status: active
+    adapter: adapters/omegafold.py
+    adapter_class: OmegaFoldAdapter
+    execution_mode: sync
+    description: >
+      Single-sequence structure predictor. No MSA required.
+      Used as the V1 fast-screening structure predictor (Gate 1).
+    abstract: >
+      OmegaFold predicts protein 3D structures from a single amino acid sequence
+      without requiring multiple sequence alignments (MSA). It combines a protein
+      language model with a geometry-aware neural network to achieve AlphaFold2-level
+      accuracy on orphan sequences. This makes it significantly faster and more
+      practical for high-throughput screening where generating MSAs is a bottleneck.
+      Published in Nature Methods (2023) by Wu et al. at Helixon.
+    meta:
+      architecture: Protein LM + geometry-aware transformer
+      input_type: Single sequence (no MSA)
+      published: "2023"
+      venue: Nature Methods
+      inference_speed: "10–30 sec / sequence on single GPU"
+    capabilities:
+      - structure_prediction
+      - fast_screening
+    inputs:
+      - name: sequence
+        type: str
+        description: Amino acid sequence in single-letter code (e.g. MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSTPSELGHAGLNGDILVWNPVLEDAFELSSMGIRVDADTLKHQLALTGDEDRLELEWHQALLRGEMPQTIGGGIGQSRLTMLLLQLPHIGQVQAGVWPAAVRESVPSLL)
+    outputs:
+      - name: pdb_path
+        type: artifact_path
+        description: Path to predicted PDB structure file
+      - name: confidence
+        type: float
+        description: Mean pLDDT confidence score (0–100)
+      - name: per_residue_plddt
+        type: list[float]
+        description: Per-residue confidence scores
+    examples:
+      - name: Short peptide
+        description: Predict structure of a short antimicrobial peptide
+        inputs:
+          sequence: "MAGAININ"
+      - name: GFP-like sequence
+        description: Fold a fluorescent protein variant
+        inputs:
+          sequence: "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTLTYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITLGMDELYK"
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 2.5
+      ram_gb: 8
+      estimated_time_per_call: "~10–30 sec per sequence on single GPU"
+    links:
+      paper: "https://www.nature.com/articles/s41592-023-01906-y"
+      code: "https://github.com/HeliXonProtein/OmegaFold"
+    tags: [structure, screening, fast]
+    notes: >
+      Chosen over ESMFold for V1 because it has a lighter dependency footprint.
+      Replace with ESMFold or AlphaFold-Multimer in V2 for complex-level scoring.
+
+  # ── SCORING ─────────────────────────────────────────────────────────────────
+
+  - id: foldx
+    name: FoldX
+    category: scoring
+    status: active
+    adapter: adapters/foldx.py
+    adapter_class: FoldXAdapter
+    execution_mode: sync
+    description: >
+      Physics-based stability and mutation scorer.
+      Used in V1 for ΔΔG estimation after structure prediction (Gate 2).
+    abstract: >
+      FoldX is a physics-based empirical force field for rapid estimation of protein
+      stability changes upon mutation (ΔΔG). It uses a detailed atomic-level energy
+      function parameterized on a large set of experimental mutagenesis data.
+      FoldX can evaluate single or combinatorial mutations in seconds on CPU, making
+      it ideal for high-throughput filtering before expensive wet-lab validation.
+      Originally published in PNAS (2004) by Schymkowitz et al., it remains one of
+      the most widely used tools in protein engineering.
+    meta:
+      method: Empirical force field (physics-based)
+      output_unit: kcal/mol (ΔΔG)
+      published: "2004"
+      venue: PNAS
+      license: Free for academic use
+      hardware: CPU-only
+    capabilities:
+      - stability_scoring
+      - mutation_ddg
+    inputs:
+      - name: pdb_path
+        type: artifact_path
+        description: Path to input PDB structure
+      - name: mutations
+        type: list[str]
+        default: []
+        description: Optional list of mutations in FoldX format (e.g. LA5A)
+    outputs:
+      - name: ddg
+        type: float
+        description: Predicted ΔΔG in kcal/mol (lower = more stable)
+      - name: raw_output_path
+        type: artifact_path
+        description: Path to raw FoldX output files
+    examples:
+      - name: Stability check (no mutations)
+        description: Score the wild-type structure stability
+        inputs:
+          pdb_path: "artifacts/example/wt_structure.pdb"
+          mutations: []
+      - name: Single point mutation
+        description: Evaluate effect of Leucine→Alanine at position 5
+        inputs:
+          pdb_path: "artifacts/example/wt_structure.pdb"
+          mutations: ["LA5A"]
+    resource_profile:
+      compute: cpu
+      disk_gb: 0.05
+      ram_gb: 0.5
+      estimated_time_per_call: "~5–30 sec per structure"
+    links:
+      paper: "https://www.pnas.org/doi/10.1073/pnas.0407043101"
+      website: "https://foldxsuite.crg.eu/"
+    tags: [scoring, stability, cpu_only]
+    notes: >
+      Requires FoldX binary. Accepts academic license (free).
+      CPU-only; no GPU required.
+
+  # ── CLOSED-LOOP / LEARNING ──────────────────────────────────────────────────
+
+  - id: reranker
+    name: Reranker Model
+    category: scoring
+    status: active
+    adapter: adapters/reranker.py
+    adapter_class: RerankerAdapter
+    execution_mode: sync
+    description: >
+      Lightweight supervised model trained on accumulated labeled outcomes.
+      Predicts P(fluorescence ≥ τ) from tool-score features.
+      Loaded into Gate 4 of the evaluation pipeline.
+      Optional in early rounds (skipped until sufficient labels exist).
+    abstract: >
+      The SynqLab Reranker is a lightweight supervised model that learns from
+      accumulated experimental outcomes to predict the probability that a candidate
+      protein meets a target threshold (e.g. P(fluorescence ≥ τ)). It combines
+      tool-derived features — pLDDT confidence from OmegaFold, ΔΔG stability from
+      FoldX, and any other registered scores — into a calibrated hit probability.
+      The model is retrained after each experimental round, closing the active
+      learning loop. It is skipped in round 1 when no labeled data exists yet.
+    meta:
+      method: Supervised ML (gradient boosted trees or logistic regression)
+      input_features: pLDDT, ΔΔG, and any registered tool scores
+      output: P(hit) ∈ [0, 1]
+      retrained: After each experimental round
+      hardware: CPU-only
+    capabilities:
+      - candidate_ranking
+      - calibrated_scoring
+    inputs:
+      - name: feature_vector
+        type: dict
+        description: "Dict of tool scores for a candidate: {plddt, ddg, ...}"
+    outputs:
+      - name: score
+        type: float
+        description: P(hit) estimate, 0–1
+      - name: model_version
+        type: str
+        description: Version tag of the reranker model artifact used
+    examples:
+      - name: Score a candidate
+        description: Predict hit probability from OmegaFold + FoldX scores
+        inputs:
+          feature_vector: '{"plddt": 82.4, "ddg": -1.3}'
+    resource_profile:
+      compute: cpu
+      disk_gb: 0.01
+      ram_gb: 0.1
+      estimated_time_per_call: "<1 sec"
+    links: {}
+    tags: [reranker, closed_loop, optional]
+    notes: >
+      Skipped in round 1 (no labels yet).
+      Activated after first experimental readout is registered in the Knowledge Store.
+      Model artifact versioned and stored in artifacts/reranker/.
+
+  # ── STORAGE / PLATFORM ──────────────────────────────────────────────────────
+
+  - id: experiment_store
+    name: Experiment Memory Store
+    category: data
+    status: active
+    adapter: adapters/experiment_store.py
+    adapter_class: ExperimentStoreAdapter
+    execution_mode: sync
+    description: >
+      Persistence layer for runs, candidates, scores, and artifacts.
+      Every tool call writes its inputs/outputs here.
+    capabilities:
+      - run_logging
+      - artifact_registration
+      - candidate_tagging
+      - provenance_tracking
+    resource_profile:
+      compute: cpu
+      disk_gb: 0.01
+      ram_gb: 0.1
+    links: {}
+    tags: [storage, core]
+    notes: PostgreSQL via Docker container. Connection URL from config (SYNQLAB_DB_URL env var).
+
+  - id: fluorescence_label_ingest
+    name: Fluorescence Label Ingestor
+    category: data
+    status: active
+    adapter: adapters/label_ingest.py
+    adapter_class: FluorescenceLabelIngestAdapter
+    execution_mode: sync
+    description: >
+      Reads experimental fluorescence readouts (CSV/XLSX) and registers
+      them in the Knowledge Store as labeled dataset artifacts.
+      Used to ingest the 113-set brightness dataset and any future wet-lab results.
+    capabilities:
+      - dataset_registration
+      - label_ingestion
+    inputs:
+      - name: file_path
+        type: str
+        description: Path to CSV or XLSX file
+      - name: sequence_column
+        type: str
+      - name: label_column
+        type: str
+      - name: project_id
+        type: str
+    outputs:
+      - name: artifact_id
+        type: str
+      - name: n_registered
+        type: int
+    resource_profile:
+      compute: cpu
+      disk_gb: 0.01
+      ram_gb: 0.1
+    links: {}
+    tags: [data, wet_lab_bridge, knowledge_store]
+    notes: >
+      Entry point for getting the 113-set brightness dataset into the system.
+      See docs/engineering/design-docs/knowledge-store.md for the full ingestion spec.
+
+  - id: pepmlm
+    name: PepMLM
+    category: sequence_generation
+    status: planned
+    adapter: adapters/pepmlm.py
+    adapter_class: PepMLMAdapter
+    execution_mode: sync
+    description: >
+      Peptide binder generator conditioned on a target protein sequence.
+      Directly relevant to GFP11/GFP1-10 — generates candidates conditioned
+      on the GFP1-10 partner sequence.
+    capabilities:
+      - conditioned_peptide_generation
+      - target_sequence_conditioning
+    inputs:
+      - name: target_sequence
+        type: str
+        description: GFP1-10 partner sequence
+      - name: n_sequences
+        type: int
+      - name: peptide_length
+        type: int
+        default: 16
+    outputs:
+      - name: sequences
+        type: list[str]
+      - name: generation_metadata
+        type: artifact_json
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 0.5
+      ram_gb: 4
+    tags: [generator, conditioned, gfp11]
+    notes: >
+      Primary V2 generator for the GFP11 task.
+      Replaces ProtGPT2 as the main generator once target-conditioning is needed.
+
+  - id: rfdiffusion
+    name: RFdiffusion
+    category: sequence_generation
+    status: planned
+    adapter: adapters/rfdiffusion.py
+    adapter_class: RFdiffusionAdapter
+    execution_mode: async
+    description: >
+      Diffusion model over backbone structure space.
+      Generates 3D backbone geometries; must be paired with ProteinMPNN
+      to recover sequences.
+    capabilities:
+      - backbone_generation
+      - motif_scaffolding
+    inputs:
+      - name: motif_pdb
+        type: artifact_path
+        description: Optional motif structure to scaffold around
+      - name: n_designs
+        type: int
+    outputs:
+      - name: pdb_paths
+        type: list[artifact_path]
+    resource_profile:
+      compute: gpu
+      gpu_level: high
+      disk_gb: 2.5
+      ram_gb: 16
+    tags: [generator, diffusion, structure_space]
+    notes: Always pair with proteinmpnn adapter in the same pipeline step.
+
+  - id: proteinmpnn
+    name: ProteinMPNN
+    category: sequence_generation
+    status: planned
+    adapter: adapters/proteinmpnn.py
+    adapter_class: ProteinMPNNAdapter
+    execution_mode: sync
+    description: >
+      Inverse folding model. Recovers sequences from backbone PDB files.
+      Used downstream of RFdiffusion to get sequences from generated backbones.
+    capabilities:
+      - inverse_folding
+      - sequence_recovery
+    inputs:
+      - name: pdb_path
+        type: artifact_path
+      - name: n_sequences
+        type: int
+        default: 10
+    outputs:
+      - name: sequences
+        type: list[str]
+      - name: log_probabilities
+        type: list[float]
+    resource_profile:
+      compute: gpu
+      gpu_level: low
+      disk_gb: 0.08
+      ram_gb: 1
+    tags: [inverse_folding, lightweight]
+
+  # ── STRUCTURE PREDICTION ────────────────────────────────────────────────────
+
+  - id: esmfold
+    name: ESMFold
+    category: structure_prediction
+    status: active
+    adapter: adapters/esmfold.py
+    adapter_class: ESMFoldAdapter
+    execution_mode: sync
+    description: >
+      Single-sequence structure predictor from Meta.
+      Replaces OmegaFold as the V2 fast-screening predictor (Gate 1).
+      Slightly heavier than OmegaFold but more widely benchmarked.
+    abstract: >
+      ESMFold is a large language model-based end-to-end structure predictor.
+      It uses the ESM-2 protein language model to generate representations that
+      are folded into 3D coordinates without requiring an MSA, making it fast
+      enough for high-throughput screening while achieving accuracy competitive
+      with AlphaFold2 on single-chain targets.
+    install: bash scripts/install_esmfold.sh
+    links:
+      paper: "https://www.science.org/doi/10.1126/science.ade2574"
+      code: "https://github.com/facebookresearch/esm"
+    capabilities:
+      - structure_prediction
+      - fast_screening
+    inputs:
+      - name: sequence
+        type: str
+        description: Amino acid sequence in single-letter code
+      - name: artifact_dir
+        type: str
+        description: Output directory for PDB, pLDDT, and metadata files
+    outputs:
+      - name: pdb_path
+        type: artifact_path
+        description: Predicted 3D structure in PDB format
+      - name: plddt_path
+        type: artifact_path
+        description: Per-residue pLDDT scores (JSON)
+      - name: confidence
+        type: float
+        description: Mean pLDDT score (0–100)
+      - name: per_residue_plddt
+        type: list[float]
+        description: Per-residue pLDDT values (0–100)
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 3.0
+      ram_gb: 20
+    tags: [structure, screening, fast]
+
+  - id: alphafold_multimer
+    name: AlphaFold-Multimer
+    category: structure_prediction
+    status: planned
+    adapter: adapters/alphafold_multimer.py
+    adapter_class: AlphaFoldMultimerAdapter
+    execution_mode: async
+    description: >
+      Complex-level structure prediction for GFP11/GFP1-10 interface quality.
+      Provides iPTM and pTM scores used as in-silico proxy for binding.
+      Expensive — runs only on candidates passing Gate 1.
+    capabilities:
+      - complex_structure_prediction
+      - interface_quality_scoring
+    inputs:
+      - name: sequences
+        type: list[str]
+        description: "[GFP11_sequence, GFP1-10_sequence]"
+    outputs:
+      - name: pdb_path
+        type: artifact_path
+      - name: iptm
+        type: float
+        description: Interface pTM score (0–1, higher = better interface)
+      - name: ptm
+        type: float
+    resource_profile:
+      compute: gpu
+      gpu_level: very_high
+      disk_gb: 2200
+      ram_gb: 64
+      estimated_time_per_call: "5–20 min per complex on A100"
+    tags: [structure, complex, interface, expensive]
+    notes: >
+      Gate 2 tool. Only called on candidates that pass OmegaFold/ESMFold Gate 1.
+      iPTM > 0.5 is a common threshold for advancing to docking.
+
+  # ── DOCKING ─────────────────────────────────────────────────────────────────
+
+  - id: diffdock_pp
+    name: DiffDock-PP
+    category: docking
+    status: planned
+    adapter: adapters/diffdock_pp.py
+    adapter_class: DiffDockPPAdapter
+    execution_mode: async
+    description: >
+      Diffusion model for rigid protein-protein docking.
+      Used in V2 for GFP11/GFP1-10 binding pose prediction (Gate 3).
+    capabilities:
+      - protein_protein_docking
+      - binding_pose_prediction
+    inputs:
+      - name: receptor_pdb
+        type: artifact_path
+        description: GFP1-10 structure
+      - name: ligand_pdb
+        type: artifact_path
+        description: GFP11 candidate structure
+    outputs:
+      - name: docked_pdb_path
+        type: artifact_path
+      - name: confidence_score
+        type: float
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 1.0
+      ram_gb: 8
+    tags: [docking, protein_protein]
+
+  # ── TASK-SPECIFIC MODEL ─────────────────────────────────────────────────────
+
+  - id: brightness_model
+    name: Brightness Model
+    category: scoring
+    status: planned
+    adapter: adapters/brightness_model.py
+    adapter_class: BrightnessModelAdapter
+    execution_mode: sync
+    description: >
+      Task-specific learned predictor of GFP11 fluorescence brightness.
+      Trained from experimental readouts stored in the Knowledge Store.
+      Predicts P(brightness ≥ τ) given a sequence and optional tool scores.
+      This is the primary ranking signal in V2+; replaces generic scoring
+      as the main gate once sufficient labels are available.
+    capabilities:
+      - brightness_prediction
+      - hit_probability_estimation
+    inputs:
+      - name: sequence
+        type: str
+      - name: tool_scores
+        type: dict
+        description: >
+          Optional dict of upstream scores:
+          {plddt, iptm, ddg, docking_confidence}
+    outputs:
+      - name: p_hit
+        type: float
+        description: Predicted probability of fluorescence ≥ τ
+      - name: model_version
+        type: str
+    resource_profile:
+      compute: cpu
+      disk_gb: 0.01
+      ram_gb: 0.2
+    tags: [brightness, task_specific, closed_loop, knowledge_store]
+    notes: >
+      Initialized from the 113-set brightness dataset (registered via
+      fluorescence_label_ingest in V1).
+      Retrained at end of every round using full Knowledge Store corpus.
+      See docs/engineering/design-docs/knowledge-store.md for the post-training path.
+
+  # ── CLOSED-LOOP ─────────────────────────────────────────────────────────────
+
+  - id: lora_update_service
+    name: LoRA Update Service
+    category: learning
+    status: planned
+    adapter: adapters/lora_update.py
+    adapter_class: LoRAUpdateAdapter
+    execution_mode: async
+    description: >
+      Parameter-efficient fine-tuning service for sequence generators.
+      Runs at the end of a round when labeled data and budget permit.
+      Trains a LoRA adapter on positively-labeled sequences to bias
+      the generator toward high-fluorescence regions of sequence space.
+    capabilities:
+      - lora_finetuning
+      - generator_adaptation
+    inputs:
+      - name: base_model_id
+        type: str
+        description: Registry ID of the generator to fine-tune (e.g. protgpt2)
+      - name: dataset_artifact_ids
+        type: list[str]
+        description: Knowledge Store artifact IDs to use as training data
+      - name: lora_rank
+        type: int
+        default: 8
+    outputs:
+      - name: adapter_artifact_path
+        type: artifact_path
+      - name: training_summary
+        type: artifact_json
+    resource_profile:
+      compute: gpu
+      gpu_level: medium
+      disk_gb: 2.0
+      ram_gb: 16
+    tags: [lora, finetuning, closed_loop, optional]
+    notes: >
+      Optional — only triggered when round_labels ≥ min_lora_threshold (config).
+      Default closed-loop update is brightness_model retraining (cheaper, more robust
+      under small data). LoRA is the second tier.
+
+  # ════════════════════════════════════════════════════════════════════
+  # CATALOGUE — long-horizon reference tools (no adapter yet, not loaded)
+  # ════════════════════════════════════════════════════════════════════
+
+  - id: esm2
+    name: ESM-2
+    category: sequence_representation
+    status: planned
+    adapter_type: python
+    description: >
+      Protein language model for sequence embeddings and representation learning.
+      Core candidate for feature extraction feeding the reranker and brightness model.
+    capabilities: [sequence_embedding, representation_extraction, similarity_features]
+    resource_profile: {compute: gpu, gpu_level: medium, disk_gb: 2.5, ram_gb: 8}
+    tags: [plm, embeddings, reranker_features]
+    notes: Provide embeddings as input features to the brightness model in V2+.
+
+  - id: protbert
+    name: ProtBERT
+    category: sequence_representation
+    status: planned
+    adapter_type: python
+    description: Alternative protein language model for sequence embedding.
+    capabilities: [sequence_embedding, transfer_features]
+    resource_profile: {compute: gpu, gpu_level: medium, disk_gb: 1.7, ram_gb: 6}
+    tags: [plm, embeddings, baseline]
+    notes: Baseline comparison to ESM-2.
+
+  - id: prott5
+    name: ProtT5
+    category: sequence_representation
+    status: planned
+    adapter_type: python
+    description: Encoder-decoder PLM for embeddings and downstream tasks.
+    capabilities: [sequence_embedding, feature_extraction]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 5.0, ram_gb: 24}
+    tags: [plm, embeddings]
+
+  - id: unirep
+    name: UniRep
+    category: sequence_representation
+    status: planned
+    adapter_type: python
+    description: Older LSTM-based sequence representation. Low-cost CPU baseline.
+    capabilities: [sequence_embedding, low_cost_baseline]
+    resource_profile: {compute: cpu, disk_gb: 0.1, ram_gb: 0.5}
+    tags: [baseline, embeddings, cpu_only]
+
+  - id: tape
+    name: TAPE
+    category: sequence_representation
+    status: planned
+    adapter_type: python
+    description: Transfer-learning benchmark representation suite.
+    capabilities: [sequence_embedding, baseline_features]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.5, ram_gb: 3}
+    tags: [baseline, benchmarking]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SEQUENCE GENERATION (ADDITIONAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: progen
+    name: ProGen
+    category: sequence_generation
+    status: planned
+    adapter_type: python
+    description: >
+      Autoregressive large-scale protein generator.
+      High generation quality but heavy — excluded from V1/V2.
+    capabilities: [unconditional_generation, conditional_generation]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 6.0, ram_gb: 32}
+    tags: [generator, expensive, flagship]
+    notes: Consider after cloud GPU budget is established.
+
+  - id: evodiff
+    name: EvoDiff
+    category: sequence_generation
+    status: planned
+    adapter_type: python
+    execution_mode: async
+    description: >
+      Diffusion-based sequence generation with evolutionary conditioning.
+      Strong diversity; useful when exploration breadth is needed.
+    capabilities: [diffusion_generation, diversity_oriented_generation]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 3.0, ram_gb: 16}
+    tags: [generator, diffusion]
+    notes: Consider as a secondary generator alongside PepMLM in V2.
+
+  - id: taxdiff
+    name: TaxDiff
+    category: sequence_generation
+    status: planned
+    adapter_type: python
+    execution_mode: async
+    description: Taxonomy-guided diffusion generator.
+    capabilities: [guided_generation, taxonomy_conditioning]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 2.5, ram_gb: 16}
+    tags: [generator, diffusion, guided]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STRUCTURE PREDICTION (ADDITIONAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: alphafold2
+    name: AlphaFold2
+    category: structure_prediction
+    status: planned
+    adapter_type: workflow
+    execution_mode: async
+    description: >
+      Single-chain flagship structure predictor.
+      Use when monomer-level accuracy matters more than speed.
+    capabilities: [structure_prediction, high_accuracy]
+    resource_profile: {compute: gpu, gpu_level: very_high, disk_gb: 2200, ram_gb: 48}
+    tags: [structure, flagship, expensive]
+    notes: Superseded by AlphaFold3 for complex tasks; use for ablation.
+
+  - id: alphafold3
+    name: AlphaFold3
+    category: structure_prediction
+    status: planned
+    adapter_type: external_api
+    description: >
+      Next-generation predictor with small-molecule and nucleic-acid support.
+      Access via external API; high cost-per-call.
+    capabilities: [structure_prediction, complex_prediction, ligand_support]
+    resource_profile: {compute: external, disk_gb: 0, ram_gb: 0}
+    tags: [frontier, external_service, expensive]
+
+  - id: rosettafold
+    name: RoseTTAFold
+    category: structure_prediction
+    status: planned
+    adapter_type: python
+    description: Alternative high-accuracy structure predictor.
+    capabilities: [structure_prediction]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 8.0, ram_gb: 32}
+    tags: [structure, alternative]
+
+  - id: openfold
+    name: OpenFold
+    category: structure_prediction
+    status: planned
+    adapter_type: python
+    description: Open-source reimplementation of AlphaFold2 for fine-tuning.
+    capabilities: [structure_prediction, finetunable]
+    resource_profile: {compute: gpu, gpu_level: very_high, disk_gb: 2200, ram_gb: 48}
+    tags: [structure, open_source, finetunable]
+    notes: Useful if structural model fine-tuning on proprietary data is needed.
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INVERSE FOLDING (ADDITIONAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: esm_if
+    name: ESM-IF
+    category: inverse_folding
+    status: planned
+    adapter_type: python
+    description: >
+      Inverse folding from Meta, conditioned on 3D structural context.
+      Useful for redesigning specific structural regions.
+    capabilities: [inverse_folding, structure_conditioned_design]
+    resource_profile: {compute: gpu, gpu_level: medium, disk_gb: 0.5, ram_gb: 4}
+    tags: [inverse_folding]
+
+  - id: ligandmpnn
+    name: LigandMPNN
+    category: inverse_folding
+    status: planned
+    adapter_type: python
+    description: Ligand-aware variant of ProteinMPNN for small-molecule contexts.
+    capabilities: [inverse_folding, ligand_aware_design]
+    resource_profile: {compute: gpu, gpu_level: medium, disk_gb: 0.2, ram_gb: 2}
+    tags: [inverse_folding, ligand_aware]
+
+  - id: fold2seq
+    name: Fold2Seq
+    category: inverse_folding
+    status: planned
+    adapter_type: python
+    description: Older autoregressive inverse folding baseline.
+    capabilities: [inverse_folding, baseline]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.1, ram_gb: 1}
+    tags: [inverse_folding, baseline]
+
+  - id: densecpd
+    name: DenseCPD
+    category: inverse_folding
+    status: planned
+    adapter_type: python
+    description: Dense convolutional inverse folding baseline.
+    capabilities: [inverse_folding, baseline]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.08, ram_gb: 1}
+    tags: [inverse_folding, baseline]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DOCKING & INTERACTION (ADDITIONAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: diffdock
+    name: DiffDock
+    category: docking
+    status: planned
+    adapter_type: python
+    execution_mode: async
+    description: Diffusion model for small-molecule docking.
+    capabilities: [small_molecule_docking]
+    resource_profile: {compute: gpu, gpu_level: medium, disk_gb: 0.5, ram_gb: 4}
+    tags: [docking, small_molecule]
+
+  - id: rosettadock
+    name: RosettaDock
+    category: docking
+    status: planned
+    adapter_type: cli
+    description: Classical energy-based protein-protein docking baseline.
+    capabilities: [protein_protein_docking, classical_baseline]
+    resource_profile: {compute: cpu, disk_gb: 2.0, ram_gb: 4}
+    tags: [docking, classical, cpu_only]
+
+  - id: autodock_vina
+    name: AutoDock Vina
+    category: docking
+    status: planned
+    adapter_type: cli
+    description: Classical ligand docking. Well-validated baseline.
+    capabilities: [ligand_docking]
+    resource_profile: {compute: cpu, disk_gb: 0.05, ram_gb: 0.5}
+    tags: [docking, ligand, classical]
+
+  - id: haddock
+    name: HADDOCK
+    category: docking
+    status: planned
+    adapter_type: external_api
+    description: Data-driven docking supporting restraints from experimental data.
+    capabilities: [protein_protein_docking, restraint_guided]
+    resource_profile: {compute: external, disk_gb: 0, ram_gb: 0}
+    tags: [docking, constrained, external_service]
+
+  - id: equibind
+    name: EquiBind
+    category: docking
+    status: planned
+    adapter_type: python
+    description: Equivariant geometric learning for fast ligand docking.
+    capabilities: [ligand_docking, fast_screening]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.15, ram_gb: 2}
+    tags: [docking, fast, geometric_dl]
+
+  - id: tankbind
+    name: TANKBind
+    category: docking
+    status: planned
+    adapter_type: python
+    description: Protein-ligand binding prediction with binding site detection.
+    capabilities: [binding_prediction, binding_site_detection]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.2, ram_gb: 2}
+    tags: [docking, binding_prediction]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROPERTY PREDICTION & SCORING (ADDITIONAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: rosetta3
+    name: Rosetta3
+    category: scoring
+    status: planned
+    adapter_type: cli
+    description: Physics-based energy scoring suite. Full-atom refinement.
+    capabilities: [energy_scoring, structure_refinement]
+    resource_profile: {compute: cpu, disk_gb: 3.0, ram_gb: 4}
+    tags: [scoring, classical, rosetta]
+
+  - id: pyrosetta
+    name: PyRosetta
+    category: scoring
+    status: planned
+    adapter_type: python
+    description: Python API to Rosetta energy functions. Enables custom scoring.
+    capabilities: [custom_scoring, mutation_analysis]
+    resource_profile: {compute: cpu, disk_gb: 3.0, ram_gb: 4}
+    tags: [scoring, programmable]
+
+  - id: deepddg
+    name: DeepDDG
+    category: scoring
+    status: planned
+    adapter_type: python
+    description: Deep learning ΔΔG predictor for single-point mutations.
+    capabilities: [mutation_ddg, learned_scoring]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.1, ram_gb: 1}
+    tags: [scoring, learned_ddg]
+
+  - id: mcsm
+    name: mCSM
+    category: scoring
+    status: planned
+    adapter_type: external_api
+    description: >
+      Graph-based stability predictor; accessed via external API.
+    capabilities: [stability_scoring]
+    resource_profile: {compute: external, disk_gb: 0, ram_gb: 0}
+    tags: [scoring, external_service]
+
+  - id: dynamut
+    name: DynaMut
+    category: scoring
+    status: planned
+    adapter_type: external_api
+    description: Flexibility and stability prediction via external API.
+    capabilities: [flexibility_scoring, stability_scoring]
+    resource_profile: {compute: external, disk_gb: 0, ram_gb: 0}
+    tags: [scoring, flexibility, external_service]
+
+  - id: graphsite
+    name: GraphSite
+    category: scoring
+    status: planned
+    adapter_type: python
+    description: Binding site prediction using graph neural networks.
+    capabilities: [binding_site_prediction]
+    resource_profile: {compute: gpu, gpu_level: low, disk_gb: 0.1, ram_gb: 1}
+    tags: [binding_site, scoring]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MOLECULAR SIMULATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: gromacs
+    name: GROMACS
+    category: simulation
+    status: planned
+    adapter_type: workflow
+    execution_mode: async
+    description: >
+      High-performance molecular dynamics simulation engine.
+      Used for validating structural stability of top-k candidates.
+      Excluded from V1/V2 due to compute cost; targeted at V3.
+    capabilities: [md_simulation, stability_validation]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 0.5, ram_gb: 16}
+    tags: [md, expensive]
+    notes: >
+      Run only on top-k candidates that survive all scoring gates.
+      Provides RMSD and RMSF trajectories; outputs register in Knowledge Store.
+
+  - id: openmm
+    name: OpenMM
+    category: simulation
+    status: planned
+    adapter_type: python
+    execution_mode: async
+    description: Python-native MD simulation. More hackable than GROMACS.
+    capabilities: [md_simulation, custom_force_fields]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 0.1, ram_gb: 8}
+    tags: [md, programmable]
+
+  - id: namd
+    name: NAMD
+    category: simulation
+    status: planned
+    adapter_type: cli
+    execution_mode: async
+    description: NAMD molecular dynamics, strong for membrane proteins.
+    capabilities: [md_simulation]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 0.2, ram_gb: 8}
+    tags: [md]
+
+  - id: amber
+    name: AMBER
+    category: simulation
+    status: planned
+    adapter_type: cli
+    execution_mode: async
+    description: AMBER force-field MD suite.
+    capabilities: [md_simulation]
+    resource_profile: {compute: gpu, gpu_level: high, disk_gb: 0.5, ram_gb: 8}
+    tags: [md]
+
+  - id: charmm
+    name: CHARMM
+    category: simulation
+    status: planned
+    adapter_type: cli
+    description: Classical MD with CHARMM force fields.
+    capabilities: [md_simulation]
+    resource_profile: {compute: cpu, disk_gb: 0.3, ram_gb: 4}
+    tags: [md, classical]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PLATFORM SERVICES (FUTURE)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+  - id: reporting_service
+    name: Reporting Service
+    category: reporting
+    status: planned
+    adapter_type: python
+    description: >
+      Automated generation of per-round reports: candidate tables,
+      score distributions, Knowledge Store delta, and round summary.
+    capabilities: [report_generation, round_summary]
+    resource_profile: {compute: cpu, disk_gb: 0.01, ram_gb: 0.2}
+    tags: [reporting, analytics]
+    notes: Lightweight. Can be a simple script in V2; richer in V3.
+
+  - id: knowledge_store_api
+    name: Knowledge Store API
+    category: data
+    status: planned
+    adapter_type: http
+    description: >
+      REST API layer over the Knowledge Store.
+      Supports register, retrieve, promote, and tag operations
+      for datasets, targets, prompts, and findings.
+      See docs/engineering/design-docs/knowledge-store.md.
+    capabilities: [knowledge_registration, knowledge_retrieval]
+    resource_profile: {compute: cpu, disk_gb: 0.01, ram_gb: 0.2}
+    tags: [knowledge_store, api, platform]
+    notes: In V1 the Knowledge Store is file-backed; this API wraps it in V2.

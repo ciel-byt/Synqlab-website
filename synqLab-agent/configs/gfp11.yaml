@@ -1,0 +1,104 @@
+# SynqLab GFP11 — Task-Specific Configuration
+#
+# Overlay on top of configs/base.yaml. The deep-merge order (highest wins) is:
+#   1. Environment variables (SYNQLAB_*)
+#   2. configs/local.yaml
+#   3. configs/gfp11.yaml   ← this file
+#   4. configs/base.yaml
+#
+# Note: the V1 `synqlab.core.config.load_config()` only auto-merges
+# base + local. The Phase-4 GFP11 pipeline entry point
+# (`synqlab.orchestrator.gfp11_pipeline`) loads this file explicitly and
+# applies the deep-merge itself, then layers env vars on top.
+
+# ── Task identity ─────────────────────────────────────────────────────────────
+task:
+  type: "gfp11_brightness"     # Knowledge Store task_type for cross-project sharing
+  project_id: "gfp11-v1"       # matches scripts/ingest_brightness.py default
+  partner_name: "GFP1-10"      # human-readable; full sequence lives in the
+                               # `target` knowledge artifact (see
+                               # scripts/register_gfp11_target.py)
+
+# ── Registry ──────────────────────────────────────────────────────────────────
+registry:
+  path: "../registry/tools.yaml"  # unified registry (status-driven)
+
+# ── Experiment defaults ───────────────────────────────────────────────────────
+experiment:
+  n_sequences: 50              # candidates per agent round
+  top_k: 10                    # k passed to the complex-stability gate
+  plddt_threshold: 70.0        # ESMFold Gate-1 threshold
+  ddg_threshold: 2.0           # PyRosetta interface-ΔG / FoldX gate
+
+# ── Brightness model (the fitness function) ───────────────────────────────────
+brightness:
+  feature_mode: "embedding"        # "embedding" | "one_hot" | "hybrid"
+  model_path: "data/models/brightness/model.pkl"
+  esm_model_id: "esm2_t33_650M_UR50D"
+  k_folds: 5
+  metrics_path: "data/models/brightness/metrics.json"
+
+# ── Complex-stability gate ────────────────────────────────────────────────────
+# Backend selected here is read by ComplexStabilityAdapter (Phase 2).
+# AF-Multimer is intentionally `planned` in the registry; flip to
+# `tool: af_multimer` once we have access.
+stability:
+  tool: "esmfold"                  # "esmfold" | "omegafold" | "af_multimer"
+  linker: "GGGGSGGGGS"             # joins GFP11 ↔ GFP1-10 for the proxy fold
+  proxy_score: "plddt_mean"        # what we use in place of iPTM today
+  esmfold:
+    chunk_size: 64
+  omegafold:
+    num_recycling: 4
+  af_multimer:
+    num_models: 5
+    relax: false                   # only used once af_multimer access lands
+
+# ── External / scientific tool settings ───────────────────────────────────────
+tools:
+  spserver:
+    endpoint: "https://mmb.irbbarcelona.org/SPServer/api"   # placeholder; confirm with IRB Barcelona
+    timeout: 120        # seconds
+    retries: 3
+    backoff: 5          # base seconds for exponential retry backoff
+  pyrosetta:
+    score_function: "ref15"
+    interface_chains: "A_B"        # GFP1-10=A, GFP11=B by convention
+  esmfold:
+    device: "auto"                 # "auto" | "cuda" | "mps" | "cpu"
+    chunk_size: 64
+
+# ── Agent (Claude ReAct loop) ─────────────────────────────────────────────────
+# Bounds are enforced in synqlab.agent.loop, not just prompted.
+agent:
+  llm_provider: "anthropic"        # "anthropic" | "openai" | "mock"
+  model: "claude-sonnet-4-5"       # placeholder; configurable
+  bounds:
+    max_loops: 5
+    fitness_threshold_min: 0.4
+    fitness_threshold_max: 0.9
+    max_tool_calls_per_loop: 12
+    token_budget:
+      input: 30000
+      output: 8000
+  prompt:
+    system_prompt_path: "synqlab/agent/prompts/gfp11_system.md"
+    include_findings_from_last_n_rounds: 3
+  seed_pool:
+    source: "propose_variants"     # "propose_variants" | "protgpt2"
+    seed_sequence_artifact_id: ""  # optional: WT GFP11 sequence; if empty,
+                                   # the agent picks a seed from the 113-set
+                                   # positives via the Knowledge Store
+    mutation_budget: 4
+
+# ── Knowledge Store ───────────────────────────────────────────────────────────
+knowledge_store:
+  db_path: "data/knowledge/store.json"
+  artifacts_root: "data/knowledge/"
+
+# ── Artifact paths / logging ──────────────────────────────────────────────────
+artifacts:
+  base_dir: "artifacts"
+
+logging:
+  level: "INFO"

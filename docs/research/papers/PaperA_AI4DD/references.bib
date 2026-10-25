@@ -1,0 +1,531 @@
+% ---------------------------------------------------------------------------
+% Aria — references
+%
+% ALL 23 ENTRIES VERIFIED 2026-07: the 19 with DOIs against the Crossref API
+% (title/year/volume/pages), the four conference/preprint entries against the
+% arXiv API and DBLP. Two errors were found and fixed: a non-resolving ProLLaMA
+% DOI, and ProGen2's page range (Cell Systems appends the electronic-supplement
+% suffix .e3).
+%
+% Three NAR database-issue entries (uniprot2023, varadi2022afdb, mistry2021pfam)
+% show a Crossref "issued" year one lower than cited, because NAR posts database
+% issues online in the preceding calendar year. The cited years match the volume,
+% the issue, and the papers' own titles ("...in 2023", "...in 2021"), which is
+% the convention these papers are cited by. Left as-is deliberately.
+%
+% PROVENANCE. Every entry below is either (a) verified against the publisher
+% record during drafting, or (b) a long-standing, widely-cited record. Entries
+% verified online are marked "% [verified]" with the date. Do not add an entry
+% without checking it: an earlier AI-written draft of this paper cited
+% AGGRESCAN with the wrong first author ("Conceição Conceição" rather than
+% Conchillo-Solé), which is exactly the failure mode this note exists to stop.
+% ---------------------------------------------------------------------------
+
+% ---- the recipe this work adapts -----------------------------------------
+% [verified 2026-07: DOI from the publisher PDF. Online-first; no page numbers.]
+@article{cavanagh2026smileyllama,
+  author  = {Cavanagh, Joseph M. and Sun, Kunyang and Gritsevskiy, Andrew and
+             Bagni, Dorian and Wang, Yingze and Bannister, Thomas D. and
+             Head-Gordon, Teresa},
+  title   = {{SmileyLlama}: modifying large language models for directed
+             chemical space exploration},
+  journal = {Nature Computational Science},
+  year    = {2026},
+  doi     = {10.1038/s43588-026-00986-y},
+  note    = {arXiv:2409.02231},
+  volume = {6}, 
+  number = {8}, 
+  pages = {856--869}  
+}
+
+% ---- protein generative models -------------------------------------------
+% [verified 2026-07 via Crossref: DOI 10.1109/TAI.2025.3564914, TAI vol. 7
+%  no. 2, pp. 642-653, issued 2026-02. NOTE: an earlier draft of this file
+%  carried DOI ...3565053, which does not resolve -- it was invented. The
+%  published title says "Multitask", not "Multi-Task" as the arXiv version does.]
+@article{lv2026prollama,
+  author  = {Lv, Liuzhenghao and Lin, Zongying and Li, Hao and Liu, Yuyang and
+             Cui, Jiaxi and Chen, Calvin Yu-Chian and Yuan, Li and Tian, Yonghong},
+  title   = {{ProLLaMA}: A Protein Large Language Model for Multitask Protein
+             Language Processing},
+  journal = {IEEE Transactions on Artificial Intelligence},
+  volume  = {7},
+  number  = {2},
+  pages   = {642--653},
+  year    = {2026},
+  doi     = {10.1109/TAI.2025.3564914}
+}
+
+@article{ferruz2022protgpt2,
+  author  = {Ferruz, Noelia and Schmidt, Steffen and H{\"o}cker, Birte},
+  title   = {{ProtGPT2} is a deep unsupervised language model for protein design},
+  journal = {Nature Communications},
+  volume  = {13},
+  pages   = {4348},
+  year    = {2022},
+  doi     = {10.1038/s41467-022-32007-7}
+}
+
+@article{nijkamp2023progen2,
+  author  = {Nijkamp, Erik and Ruffolo, Jeffrey A. and Weinstein, Eli N. and
+             Naik, Nikhil and Madani, Ali},
+  title   = {{ProGen2}: Exploring the boundaries of protein language models},
+  journal = {Cell Systems},
+  volume  = {14},
+  number  = {11},
+  pages   = {968--978.e3},
+  year    = {2023},
+  doi     = {10.1016/j.cels.2023.10.002}
+}
+
+@article{madani2023progen,
+  author  = {Madani, Ali and Krause, Ben and Greene, Eric R. and Subramanian, Subu and
+             Mohr, Benjamin P. and Holton, James M. and Olmos, Jose Luis and
+             Xiong, Caiming and Sun, Zachary Z. and Socher, Richard and
+             Fraser, James S. and Naik, Nikhil},
+  title   = {Large language models generate functional protein sequences across
+             diverse families},
+  journal = {Nature Biotechnology},
+  volume  = {41},
+  pages   = {1099--1106},
+  year    = {2023},
+  doi     = {10.1038/s41587-022-01618-2}
+}
+
+% ---- base model and fine-tuning ------------------------------------------
+@article{dubey2024llama3,
+  author = {Grattafiori, Aaron and others},
+  title   = {The {Llama} 3 Herd of Models},
+  journal = {arXiv preprint arXiv:2407.21783},
+  year    = {2024}
+}
+
+@inproceedings{dettmers2023qlora,
+  author    = {Dettmers, Tim and Pagnoni, Artidoro and Holtzman, Ari and
+               Zettlemoyer, Luke},
+  title     = {{QLoRA}: Efficient Finetuning of Quantized {LLMs}},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {36},
+  pages = {10088--10115}, 
+  doi = {10.52202/075280-0441},
+  year      = {2023}
+}
+
+@inproceedings{hu2022lora,
+  author    = {Hu, Edward J. and Shen, Yelong and Wallis, Phillip and
+               Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and
+               Wang, Lu and Chen, Weizhu},
+  title     = {{LoRA}: Low-Rank Adaptation of Large Language Models},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2022}
+}
+
+% ---- data, features, splitting -------------------------------------------
+@article{uniprot2023,
+  author  = {{The UniProt Consortium}},
+  title   = {{UniProt}: the Universal Protein Knowledgebase in 2023},
+  journal = {Nucleic Acids Research},
+  volume  = {51},
+  number  = {D1},
+  pages   = {D523--D531},
+  year    = {2023},
+  doi     = {10.1093/nar/gkac1052}
+}
+
+@article{cock2009biopython,
+  author  = {Cock, Peter J. A. and Antao, Tiago and Chang, Jeffrey T. and
+             Chapman, Brad A. and Cox, Cymon J. and Dalke, Andrew and
+             Friedberg, Iddo and Hamelryck, Thomas and Kauff, Frank and
+             Wilczynski, Bartek and de Hoon, Michiel J. L.},
+  title   = {Biopython: freely available Python tools for computational
+             molecular biology and bioinformatics},
+  journal = {Bioinformatics},
+  volume  = {25},
+  number  = {11},
+  pages   = {1422--1423},
+  year    = {2009},
+  doi     = {10.1093/bioinformatics/btp163}
+}
+
+% [verified 2026-07: BMC Bioinformatics 8:65. First author Conchillo-Sole.]
+@article{conchillosole2007aggrescan,
+  author  = {Conchillo-Sol{\'e}, Oscar and de Groot, Natalia S. and
+             Avil{\'e}s, Francesc X. and Vendrell, Josep and Daura, Xavier and
+             Ventura, Salvador},
+  title   = {{AGGRESCAN}: a server for the prediction and evaluation of ``hot
+             spots'' of aggregation in polypeptides},
+  journal = {BMC Bioinformatics},
+  volume  = {8},
+  pages   = {65},
+  year    = {2007},
+  doi     = {10.1186/1471-2105-8-65}
+}
+
+@article{steinegger2017mmseqs2,
+  author  = {Steinegger, Martin and S{\"o}ding, Johannes},
+  title   = {{MMseqs2} enables sensitive protein sequence searching for the
+             analysis of massive data sets},
+  journal = {Nature Biotechnology},
+  volume  = {35},
+  number  = {11},
+  pages   = {1026--1028},
+  year    = {2017},
+  doi     = {10.1038/nbt.3988}
+}
+
+@article{jumper2021alphafold,
+  author  = {Jumper, John and Evans, Richard and Pritzel, Alexander and
+             Green, Tim and Figurnov, Michael and Ronneberger, Olaf and
+             Tunyasuvunakool, Kathryn and Bates, Russ and {\v{Z}}{\'i}dek, Augustin and
+             Potapenko, Anna and others},
+  title   = {Highly accurate protein structure prediction with {AlphaFold}},
+  journal = {Nature},
+  volume  = {596},
+  number  = {7873},
+  pages   = {583--589},
+  year    = {2021},
+  doi     = {10.1038/s41586-021-03819-2}
+}
+
+@article{varadi2022afdb,
+  author  = {Varadi, Mihaly and Anyango, Stephen and Deshpande, Mandar and
+             Nair, Sreenath and Natassia, Cindy and Yordanova, Galabina and
+             Yuan, David and others},
+  title   = {{AlphaFold} Protein Structure Database: massively expanding the
+             structural coverage of protein-sequence space with high-accuracy
+             models},
+  journal = {Nucleic Acids Research},
+  volume  = {50},
+  number  = {D1},
+  pages   = {D439--D444},
+  year    = {2022},
+  doi     = {10.1093/nar/gkab1061}
+}
+
+% ---- external predictors used for evaluation ------------------------------
+@article{mistry2021pfam,
+  author  = {Mistry, Jaina and Chuguransky, Sara and Williams, Lowri and
+             Qureshi, Matloob and Salazar, Gustavo A. and Sonnhammer, Erik L. L. and
+             Tosatto, Silvio C. E. and Paladin, Lisanna and Raj, Shriya and
+             Richardson, Lorna J. and Finn, Robert D. and Bateman, Alex},
+  title   = {{Pfam}: The protein families database in 2021},
+  journal = {Nucleic Acids Research},
+  volume  = {49},
+  number  = {D1},
+  pages   = {D412--D419},
+  year    = {2021},
+  doi     = {10.1093/nar/gkaa913}
+}
+
+@article{eddy2011hmmer,
+  author  = {Eddy, Sean R.},
+  title   = {Accelerated Profile {HMM} Searches},
+  journal = {PLoS Computational Biology},
+  volume  = {7},
+  number  = {10},
+  pages   = {e1002195},
+  year    = {2011},
+  doi     = {10.1371/journal.pcbi.1002195}
+}
+
+@article{teufel2022signalp6,
+  author  = {Teufel, Felix and Almagro Armenteros, Jos{\'e} Juan and
+             Johansen, Alexander Rosenberg and Gislason, Magn{\'u}s Halld{\'o}r and
+             Pihl, Silas Irby and Tsirigos, Konstantinos D. and Winther, Ole and
+             Brunak, S{\o}ren and von Heijne, Gunnar and Nielsen, Henrik},
+  title   = {{SignalP} 6.0 predicts all five types of signal peptides using
+             protein language models},
+  journal = {Nature Biotechnology},
+  volume  = {40},
+  pages   = {1023--1025},
+  year    = {2022},
+  doi     = {10.1038/s41587-021-01156-3}
+}
+
+% [verified 2026-07: bioRxiv preprint, DOI 10.1101/2022.04.08.487609]
+@article{hallgren2022deeptmhmm,
+  author  = {Hallgren, Jeppe and Tsirigos, Konstantinos D. and
+             Pedersen, Mads Damgaard and Almagro Armenteros, Jos{\'e} Juan and
+             Marcatili, Paolo and Nielsen, Henrik and Krogh, Anders and
+             Winther, Ole},
+  title   = {{DeepTMHMM} predicts alpha and beta transmembrane proteins using
+             deep neural networks},
+  journal = {bioRxiv},
+  year    = {2022},
+  doi     = {10.1101/2022.04.08.487609}
+}
+
+@article{yu2023clean,
+  author  = {Yu, Tianhao and Cui, Haiyang and Li, Jianan Canal and Luo, Yunan and
+             Jiang, Guangde and Zhao, Huimin},
+  title   = {Enzyme function prediction using contrastive learning},
+  journal = {Science},
+  volume  = {379},
+  number  = {6639},
+  pages   = {1358--1363},
+  year    = {2023},
+  doi     = {10.1126/science.adf2465}
+}
+
+@article{lin2023esm2,
+  author  = {Lin, Zeming and Akin, Halil and Rao, Roshan and Hie, Brian and
+             Zhu, Zhongkai and Lu, Wenting and Smetanin, Nikita and
+             Verkuil, Robert and Kabeli, Ori and Shmueli, Yaniv and others},
+  title   = {Evolutionary-scale prediction of atomic-level protein structure
+             with a language model},
+  journal = {Science},
+  volume  = {379},
+  number  = {6637},
+  pages   = {1123--1130},
+  year    = {2023},
+  doi     = {10.1126/science.ade2574}
+}
+
+@article{dauparas2022proteinmpnn,
+  author  = {Dauparas, Justas and Anishchenko, Ivan and Bennett, Nathaniel and
+             Bai, Hua and Ragotte, Robert J. and Milles, Lukas F. and
+             Wicky, Basile I. M. and Courbet, Alexis and de Haas, Rob J. and
+             Bethel, Neville and others},
+  title   = {Robust deep learning-based protein sequence design using
+             {ProteinMPNN}},
+  journal = {Science},
+  volume  = {378},
+  number  = {6615},
+  pages   = {49--56},
+  year    = {2022},
+  doi     = {10.1126/science.add2187}
+}
+
+@article{zhang2004tmscore,
+  author  = {Zhang, Yang and Skolnick, Jeffrey},
+  title   = {Scoring function for automated assessment of protein structure
+             template quality},
+  journal = {Proteins: Structure, Function, and Bioinformatics},
+  volume  = {57},
+  number  = {4},
+  pages   = {702--710},
+  year    = {2004},
+  doi     = {10.1002/prot.20264}
+}
+
+% ---- preference optimisation (future work) --------------------------------
+@inproceedings{rafailov2023dpo,
+  author    = {Rafailov, Rafael and Sharma, Archit and Mitchell, Eric and
+               Ermon, Stefano and Manning, Christopher D. and Finn, Chelsea},
+  title     = {Direct Preference Optimization: Your Language Model is Secretly
+               a Reward Model},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {36},
+  pages = {53728--53741}, 
+  doi = {10.52202/075280-2338},
+  year      = {2023}
+}
+
+@article{xue2025residpo,
+  author  = {Xue, Fanglei and Kubaney, Andrew and Guo, Zhichun and
+             Min, Joseph K. and Liu, Ge and Yang, Yi and Baker, David},
+  title   = {Improving Protein Sequence Design through Designability
+             Preference Optimization},
+  journal = {arXiv preprint arXiv:2506.00297},
+  year    = {2025},
+}
+
+@article{kshirsagar2026rosettasearch,
+  author  = {Kshirsagar, Meghana and Nie, Allen and Cheng, Ching-An and
+             Xue, Fanglei and Dodhia, Rahul and Lavista Ferres, Juan and
+             Yang, Kevin K. and DiMaio, Frank},
+  title   = {{RosettaSearch}: Multi-Objective Inference-Time Search for
+             Protein Sequence Design},
+  journal = {arXiv preprint arXiv:2604.17175},
+  year    = {2026},
+}
+
+@article{zhang2023instructiontuning,
+  author  = {Zhang, Shengyu and Dong, Linfeng and Li, Xiaoya and Zhang, Sen and
+             Sun, Xiaofei and Wang, Shuhe and Li, Jiwei and Hu, Runyi and
+             Zhang, Tianwei and Wu, Fei and Wang, Guoyin},
+  title   = {Instruction Tuning for Large Language Models: A Survey},
+  journal = {arXiv preprint arXiv:2308.10792},
+  year    = {2023},
+}
+
+% ---------------------------------------------------------------------------
+% Multi-attribute controllable protein generation (related work)
+% ---------------------------------------------------------------------------
+
+@article{hayes2025esm3,
+  author  = {Hayes, Thomas and Rao, Roshan and Akin, Halil and others},
+  title   = {Simulating 500 million years of evolution with a language model},
+  journal = {Science},
+  volume  = {387},
+  number  = {6736},
+  pages   = {850--858},
+  year    = {2025},
+  doi     = {10.1126/science.ads0018},
+}
+
+@inproceedings{ismail2025cbplm,
+  author    = {Ismail, Aya Abdelsalam and Oikarinen, Tuomas and Wang, Amy and others},
+  title     = {Concept Bottleneck Language Models For Protein Design},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  note      = {arXiv:2411.06090},
+}
+
+@inproceedings{liu2025ctrlprot,
+  author    = {Liu, Xiangyu and Liu, Yi and Chen, Silei and Hu, Wei},
+  title     = {Controllable Protein Sequence Generation with {LLM} Preference Optimization},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {39},
+  number    = {1},
+  pages     = {505--513},
+  year      = {2025},
+  doi       = {10.1609/aaai.v39i1.32030},
+}
+
+@article{luo2026prefixprot,
+  author  = {Luo, Jiawei and Li, Jiahao and Liu, Xianliang and Zhang, Yang and
+             Chen, Qingcai and Chen, Junjie},
+  title   = {Controllable Protein Design by Prefix-Tuning Protein Language Models},
+  journal = {Journal of Chemical Information and Modeling},
+  volume  = {66},
+  number  = {8},
+  pages   = {4932--4946},
+  year    = {2026},
+  doi     = {10.1021/acs.jcim.5c03186},
+}
+
+@article{wang2024propend,
+  author  = {Wang, Zeyuan and Chen, Binbin and Ding, Keyan and others},
+  title   = {Multi-purpose controllable protein generation via prompted language models},
+  journal = {bioRxiv},
+  year    = {2024},
+  doi     = {10.1101/2024.11.17.624051},
+}
+
+@inproceedings{jiang2024followbench,
+  author    = {Jiang, Yuxin and Wang, Yufei and Zeng, Xingshan and others},
+  title     = {{FollowBench}: A Multi-level Fine-grained Constraints Following
+               Benchmark for Large Language Models},
+  booktitle = {Proceedings of the 62nd Annual Meeting of the Association for
+               Computational Linguistics (Volume 1: Long Papers)},
+  pages     = {4667--4688},
+  year      = {2024},
+  doi       = {10.18653/v1/2024.acl-long.257},
+}
+
+@article{vasileva2026phase,
+  author  = {Vasileva, Mariya I.},
+  title   = {Large Language Models Can Follow Instructions, But Not Many at Once:
+             Phase Transitions in Compositional Constraint Satisfaction},
+  journal = {arXiv preprint arXiv:2608.12426},
+  year    = {2026},
+}
+
+% ---------------------------------------------------------------------------
+% Cited in the text but previously missing from this file
+% ---------------------------------------------------------------------------
+
+@article{widatalla2026proteindpo,
+  author  = {Widatalla, Talal and Borah, Ashir A. and King, Samuel H. and
+             Driscoll, Claudia L. and Rafailov, Rafael and Hie, Brian L.},
+  title   = {Aligning protein-generative models to experimental fitness with
+             {ProteinDPO}},
+  journal = {Nature Methods},
+  year    = {2026},
+  doi     = {10.1038/s41592-026-03137-3},
+}
+
+@inproceedings{pang2024rpo,
+  author    = {Pang, Richard Yuanzhe and Yuan, Weizhe and Cho, Kyunghyun and
+               He, He and Sukhbaatar, Sainbayar and Weston, Jason},
+  title     = {Iterative Reasoning Preference Optimization},
+  booktitle = {Advances in Neural Information Processing Systems 37 (NeurIPS)},
+  pages = {116617--116637}, 
+  doi = {10.52202/079017-3702},
+  year      = {2024},
+}
+
+
+% ---------------------------------------------------------------------------
+% Adherence / instruction-following benchmarks for protein design (not yet cited)
+% ---------------------------------------------------------------------------
+
+@article{kuang2025pdfbench,
+  author  = {Kuang, Jiahao and Liu, Nuowei and Wang, Jie and Sun, Changzhi and
+             Ji, Tao and Wu, Yuanbin},
+  title   = {{PDFBench}: A Benchmark for De novo Protein Design from Function},
+  journal = {arXiv preprint arXiv:2505.20346},
+  year    = {2025},
+}
+
+@article{seo2026vibeproteinbench,
+  author  = {Seo, Hyunjin and Ahn, Hongjoon and Park, Jimin and others},
+  title   = {{VibeProteinBench}: An Evaluation Benchmark for Language-interfaced
+             Vibe Protein Design},
+  journal = {arXiv preprint arXiv:2605.10978},
+  year    = {2026},
+}
+
+@article{liu2025proteindt,
+  author  = {Liu, Shengchao and Zhu, Yutao and Lu, Jiarui and Xu, Zhao and
+             Nie, Weili and Gitter, Anthony and Xiao, Chaowei and Tang, Jian and
+             Guo, Hongyu and Anandkumar, Anima},
+  title   = {A text-guided protein design framework},
+  journal = {Nature Machine Intelligence},
+  year    = {2025},
+  doi     = {10.1038/s42256-025-01011-z},
+  volume = {7}, 
+  number = {4}, 
+  pages = {580--591}  
+}
+
+@inproceedings{wang2024instructprotein,
+  author    = {Wang, Zeyuan and Zhang, Qiang and Ding, Keyan and Qin, Ming and
+               Zhuang, Xiang and Li, Xiaotong and Chen, Huajun},
+  title     = {{InstructProtein}: Aligning Human and Protein Language via
+               Knowledge Instruction},
+  booktitle = {Proceedings of the 62nd Annual Meeting of the Association for
+               Computational Linguistics (Volume 1: Long Papers)},
+  pages     = {1114--1136},
+  year      = {2024}
+}
+
+@inproceedings{fang2024molinstructions,
+  author    = {Fang, Yin and Liang, Xiaozhuan and Zhang, Ningyu and
+               Liu, Kangwei and Huang, Rui and Chen, Zhuo and Fan, Xiaohui and
+               Chen, Huajun},
+  title     = {{Mol-Instructions}: A Large-Scale Biomolecular Instruction
+               Dataset for Large Language Models},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+
+@article{ingraham2023chroma,
+  author  = {Ingraham, John B. and Baranov, Max and Costello, Zak and
+             Barber, Karl W. and Wang, Wujie and Ismail, Ahmed and
+             Frappier, Vincent and Lord, Dana M. and Ng-Thow-Hing, Christopher
+             and Van Vlack, Erik R. and others},
+  title   = {Illuminating protein space with a programmable generative model},
+  journal = {Nature},
+  volume  = {623},
+  number  = {7989},
+  pages   = {1070--1078},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06728-8}
+}
+
+@article{watson2023rfdiffusion,
+  author  = {Watson, Joseph L. and Juergens, David and Bennett, Nathaniel R. and
+             Trippe, Brian L. and Yim, Jason and Eisenach, Helen E. and
+             Ahern, Woody and Borst, Andrew J. and Ragotte, Robert J. and
+             Milles, Lukas F. and others},
+  title   = {De novo design of protein structure and function with
+             {RFdiffusion}},
+  journal = {Nature},
+  volume  = {620},
+  number  = {7976},
+  pages   = {1089--1100},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06415-8}
+}

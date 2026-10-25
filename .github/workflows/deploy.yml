@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image
-        run: docker build -t todo-app:ci .
+        run: docker build -f Dockerfile.synqlab -t synqlab:ci .
 
   deploy:
     needs: build
@@ -35,17 +35,30 @@ jobs:
       - name: Build, tag, push image
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          REPO: todo-app
+          REPO: synqlab
           TAG: ${{ github.sha }}
         run: |
-          docker build -t $REGISTRY/$REPO:$TAG .
+          docker build -f Dockerfile.synqlab -t $REGISTRY/$REPO:$TAG .
           docker push $REGISTRY/$REPO:$TAG
 
+      # One task only (min = max = 1): the start command runs the database migrations first.
       - name: Deploy to ECS Express
         uses: aws-actions/amazon-ecs-deploy-express-service@v1
         with:
-          service-name: todo-app
-          image: ${{ steps.ecr-login.outputs.registry }}/todo-app:${{ github.sha }}
+          service-name: synqlab
+          image: ${{ steps.ecr-login.outputs.registry }}/synqlab:${{ github.sha }}
           execution-role-arn: ${{ secrets.ECS_EXECUTION_ROLE_ARN }}
           infrastructure-role-arn: ${{ secrets.ECS_INFRASTRUCTURE_ROLE_ARN }}
           container-port: 8000
+          cpu: 1024
+          memory: 2048
+          min-task-count: 1
+          max-task-count: 1
+          health-check-path: /api/health
+          command: '["sh","-c","alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"]'
+          environment-variables: '[{"name":"SYNQLAB_REGISTRY_DIR","value":"/registry"},{"name":"SYNQLAB_ARTIFACT_DIR","value":"/app/data/agent_artifacts"}]'
+          secrets: >-
+            [{"name":"SYNQLAB_DB_URL","valueFrom":"${{ secrets.SYNQLAB_DB_URL_SECRET_ARN }}"},
+            {"name":"SYNQLAB_JWT_SECRET","valueFrom":"${{ secrets.SYNQLAB_JWT_SECRET_ARN }}"},
+            {"name":"SYNQLAB_ADMIN_EMAIL","valueFrom":"${{ secrets.SYNQLAB_ADMIN_EMAIL_SECRET_ARN }}"},
+            {"name":"SYNQLAB_ADMIN_PASSWORD","valueFrom":"${{ secrets.SYNQLAB_ADMIN_PASSWORD_SECRET_ARN }}"}]

@@ -1,0 +1,389 @@
+{{/*
+  SynqLab Grafana Dashboard — KEDA + Resource Usage
+  ──────────────────────────────────────────────────
+
+  Auto-discovered by the Grafana sidecar via the grafana_dashboard label.
+  Uses a $tool template variable to filter per-tool views (no messy overlap).
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synqlab.fullname" . }}-grafana-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    {{- include "synqlab.labels" . | nindent 4 }}
+data:
+  synqlab-keda-resources.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "templating": {
+        "list": [
+          {
+            "current": { "selected": false, "text": "protgpt2", "value": "protgpt2" },
+            "description": "Select a tool to inspect",
+            "name": "tool",
+            "label": "Tool",
+            "options": [
+              { "selected": true,  "text": "protgpt2",     "value": "protgpt2" },
+              { "selected": false, "text": "omegafold",     "value": "omegafold" },
+              { "selected": false, "text": "foldx",         "value": "foldx" },
+              { "selected": false, "text": "reranker",      "value": "reranker" },
+              { "selected": false, "text": "esmfold",       "value": "esmfold" },
+              { "selected": false, "text": "proteinmpnn",   "value": "proteinmpnn" },
+              { "selected": false, "text": "gateway",       "value": "gateway" }
+            ],
+            "query": "protgpt2,omegafold,foldx,reranker,esmfold,proteinmpnn,gateway",
+            "type": "custom"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "title": "⚙️ All Tools — CPU Usage (KEDA)",
+          "description": "CPU usage per tool. Flat at 0 = scaled down by KEDA.",
+          "type": "timeseries",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "stacking": { "mode": "none" },
+                "showPoints": "auto"
+              },
+              "unit": "short",
+              "min": 0
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"synqlab\", container=~\"protgpt2|omegafold|foldx|reranker|esmfold|proteinmpnn|gateway\", container!=\"\"}[5m]))",
+              "legendFormat": "{{`{{container}}`}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "💰 Namespace Totals",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 6 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 5 },
+                  { "color": "red", "value": 10 }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Total Memory (GiB)" },
+                "properties": [
+                  { "id": "unit", "value": "decgbytes" },
+                  { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 8 },
+                    { "color": "red", "value": 20 }
+                  ]}}
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"synqlab\", container!=\"\", container!=\"POD\"}[5m]))",
+              "legendFormat": "Total CPU (cores)",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"synqlab\", container!=\"\", container!=\"POD\"}) / 1024 / 1024 / 1024",
+              "legendFormat": "Total Memory (GiB)",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kube_pod_info{namespace=\"synqlab\"})",
+              "legendFormat": "Running Pods",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "title": "⚙️ $tool — CPU Usage vs Allocation",
+          "description": "Actual CPU vs Helm request (dashed) and limit (dotted).",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "lineWidth": 2,
+                "stacking": { "mode": "none" }
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "request" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 5] } },
+                  { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 2 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "limit" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "fill": "dot" } },
+                  { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 2 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "actual" },
+                "properties": [
+                  { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+                  { "id": "custom.fillOpacity", "value": 15 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "utilization %" },
+                "properties": [
+                  { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 1 },
+                  { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [4, 4] } },
+                  { "id": "unit", "value": "percent" },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.axisLabel", "value": "Utilization %" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"synqlab\", container=\"$tool\"}[5m]))",
+              "legendFormat": "actual",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"cpu\", container=\"$tool\"})",
+              "legendFormat": "request",
+              "refId": "B"
+            },
+            {
+              "expr": "sum(kube_pod_container_resource_limits{namespace=\"synqlab\", resource=\"cpu\", container=\"$tool\"})",
+              "legendFormat": "limit",
+              "refId": "C"
+            },
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"synqlab\", container=\"$tool\"}[5m])) / sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"cpu\", container=\"$tool\"}) * 100",
+              "legendFormat": "utilization %",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "title": "🧠 $tool — Memory Usage vs Allocation",
+          "description": "Actual memory vs Helm request (dashed) and limit (dotted).",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "lineWidth": 2,
+                "stacking": { "mode": "none" }
+              },
+              "unit": "decgbytes"
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "request" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 5] } },
+                  { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 2 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "limit" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "fill": "dot" } },
+                  { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 2 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "actual" },
+                "properties": [
+                  { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+                  { "id": "custom.fillOpacity", "value": 15 }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "utilization %" },
+                "properties": [
+                  { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
+                  { "id": "custom.lineWidth", "value": 1 },
+                  { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [4, 4] } },
+                  { "id": "unit", "value": "percent" },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.axisLabel", "value": "Utilization %" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"synqlab\", container=\"$tool\"}) / 1024 / 1024 / 1024",
+              "legendFormat": "actual",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"memory\", container=\"$tool\"}) / 1024 / 1024 / 1024",
+              "legendFormat": "request",
+              "refId": "B"
+            },
+            {
+              "expr": "sum(kube_pod_container_resource_limits{namespace=\"synqlab\", resource=\"memory\", container=\"$tool\"}) / 1024 / 1024 / 1024",
+              "legendFormat": "limit",
+              "refId": "C"
+            },
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"synqlab\", container=\"$tool\"}) / sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"memory\", container=\"$tool\"}) * 100",
+              "legendFormat": "utilization %",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "title": "📈 $tool — CPU Utilization %",
+          "description": "CPU usage as % of request. Over 100% = burstable headroom used.",
+          "type": "gauge",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 100 },
+                  { "color": "red", "value": 150 }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 200
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"synqlab\", container=\"$tool\"}[5m])) / sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"cpu\", container=\"$tool\"}) * 100",
+              "legendFormat": "CPU %",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "📈 $tool — Memory Utilization %",
+          "description": "Memory usage as % of request.",
+          "type": "gauge",
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 80 },
+                  { "color": "red", "value": 95 }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 200
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"synqlab\", container=\"$tool\"}) / sum(kube_pod_container_resource_requests{namespace=\"synqlab\", resource=\"memory\", container=\"$tool\"}) * 100",
+              "legendFormat": "Memory %",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "🔄 $tool — Restarts (1h)",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 12, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 3 }
+                ]
+              },
+              "decimals": 0
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"synqlab\", container=\"$tool\"}[1h]))",
+              "legendFormat": "Restarts",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "⏱️ $tool — Uptime",
+          "type": "stat",
+          "gridPos": { "h": 6, "w": 6, "x": 18, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null }
+                ]
+              },
+              "unit": "s"
+            }
+          },
+          "targets": [
+            {
+              "expr": "time() - min(kube_pod_start_time{namespace=\"synqlab\", pod=~\"synqlab-$tool.*\"})",
+              "legendFormat": "Uptime",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["synqlab", "keda", "resources"],
+      "time": { "from": "now-1h", "to": "now" },
+      "refresh": "30s",
+      "title": "SynqLab — KEDA & Resource Usage",
+      "uid": "synqlab-keda-resources"
+    }

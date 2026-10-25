@@ -1,0 +1,50 @@
+# SynqLab team roster
+#
+# Single source of truth mapping each teammate to their title, role, reporting
+# line, and external identities — so the agent can build org charts and
+# auto-assign/route tickets (Linear/Notion) once that integration is enabled.
+# See team/AGENTS.md.
+#
+# Fields per member:
+#   id          short handle used to reference this person (and in reports_to)
+#   name        full name
+#   title       formal title (e.g. Co-Founder & CEO)
+#   role        what they do day-to-day
+#   reports_to  id of the person they report to (null for top of the org)
+#   areas       parts of the project they own (free-form tags)
+#   profile     path to resume/bio under team/profiles/ (optional)
+#   linear      Linear user id/email (optional, fill when ticketing is wired)
+#   notion      Notion user id/email (optional)
+#   github      GitHub username (optional)
+
+team:
+  - id: sepehr
+    name: Sepehr Bayat
+    title: Co-Founder & CEO
+    role: Company direction, architecture, fundraising
+    reports_to: null
+    areas: [architecture, orchestrator, product, fundraising]
+    profile: profiles/Sepehr_Bayat_Resume.docx
+    linear: ""
+    notion: ""
+    github: ""
+
+  - id: pouriya
+    name: Pouriya Bayat
+    title: Co-Founder & CRO
+    role: Research (scientific direction, experiments, evaluation)
+    reports_to: sepehr
+    areas: [research, experiments, evaluation, science]
+    profile: ""
+    linear: ""
+    notion: ""
+    github: ""
+
+  # - id: <handle>
+  #   name: <Full Name>
+  #   title: <title>
+  #   role: <role>
+  #   reports_to: <manager id>
+  #   areas: [<area>, <area>]
+  #   profile: profiles/<file>
+  #   linear: ""

@@ -1,0 +1,567 @@
+# ═══════════════════════════════════════════════════════════════════
+# SynqLab — Build & Push Docker Images to Google Artifact Registry
+#
+# IMPORTANT: This workflow only runs AFTER all tests pass. It triggers
+# via `workflow_run` when the Tests workflow completes successfully.
+#
+# Selective builds via commit message flags:
+#   [build:esmfold]              → only esmfold-svc
+#   [build:protgpt2,esmfold]     → protgpt2-svc + esmfold-svc
+#   [build:all]                  → all 7 services
+#   (no flag)                    → skip build entirely
+#
+# Actions (non-service pseudo-targets, composable with service names):
+#   [build:migrate]              → only run alembic upgrade head (uses
+#                                   `app:latest`, no build, no deploy)
+#   [build:app,migrate]          → build app, deploy, then migrate
+#                                   (uses `app:<sha>`)
+#   [build:esmfold,migrate]      → build esmfold, deploy, then migrate
+#                                   (uses `app:latest`)
+#
+# Note: `migrate` is NEVER implicit — you must list it explicitly.
+#
+# Uses Workload Identity Federation (keyless, no secrets needed).
+# ═══════════════════════════════════════════════════════════════════
+
+name: Build & Push Images
+
+on:
+  # Manual trigger (bypasses test requirement)
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated services to build (e.g. esmfold,protgpt2) or "all"'
+        required: false
+        default: 'all'
+  # Automatic trigger: only run after Tests workflow passes
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+    branches: [main, develop, 'feat/**']
+
+env:
+  PROJECT_ID: project-41f6f4ea-8a21-4190-a8a
+  REGION: us-central1
+  REGISTRY: us-central1-docker.pkg.dev/project-41f6f4ea-8a21-4190-a8a/synqlab
+
+  # Workload Identity Federation
+  WIF_PROVIDER: projects/289343279208/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  WIF_SERVICE_ACCOUNT: github-ci@project-41f6f4ea-8a21-4190-a8a.iam.gserviceaccount.com
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Step 0: Gate on test results (for workflow_run triggers)
+  # ═══════════════════════════════════════════════════════════════
+  gate:
+    name: Check test results
+    runs-on: ubuntu-latest
+    # Skip this check for manual workflow_dispatch (no prior workflow)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Tests passed
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            echo "### ✅ Tests passed — proceeding with build" >> $GITHUB_STEP_SUMMARY
+            echo "Triggered by: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚡ Manual trigger — skipping test check" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ═══════════════════════════════════════════════════════════════
+  # Step 1: Parse commit message for [build:xxx] flags
+  # ═══════════════════════════════════════════════════════════════
+  detect:
+    name: Detect build targets
+    needs: gate
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.parse.outputs.matrix }}
+      has_targets: ${{ steps.parse.outputs.has_targets }}
+      deploy_tags: ${{ steps.parse.outputs.deploy_tags }}
+      has_app: ${{ steps.parse.outputs.has_app }}
+      run_migrate: ${{ steps.parse.outputs.run_migrate }}
+      commit_sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - name: Determine commit SHA
+        id: sha
+        run: |
+          # For workflow_run events, use the triggering commit SHA
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            SHA="${{ github.sha }}"
+          fi
+          echo "sha=${SHA}" >> $GITHUB_OUTPUT
+          echo "Using commit SHA: ${SHA}"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          fetch-depth: 1
+
+      - name: Parse build flags from commit message
+        id: parse
+        run: |
+          # ── Determine build targets ──────────────────────────
+          # Get commit message from git (more reliable than workflow_run event)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+          MANUAL_INPUT="${{ github.event.inputs.services || '' }}"
+
+          # Priority: manual input > commit flag > skip
+          # Merge commits (PR merges) are ignored — only direct pushes
+          # with explicit [build:...] flags trigger builds.
+          if [[ -n "$MANUAL_INPUT" ]]; then
+            TARGETS="$MANUAL_INPUT"
+          elif [[ "$COMMIT_MSG" =~ ^Merge\ pull\ request ]]; then
+            echo "⏭ Merge commit detected — skipping build flags"
+            TARGETS=""
+          elif [[ "$COMMIT_MSG" =~ \[build:([a-zA-Z0-9_,]+)\] ]]; then
+            TARGETS="${BASH_REMATCH[1]}"
+          else
+            TARGETS=""
+          fi
+
+          echo "Detected raw targets: $TARGETS"
+
+          # ── Extract the `migrate` action (not a buildable service) ─
+          # Users can compose it with service names, e.g. [build:app,migrate].
+          # Alone, [build:migrate] runs only the alembic step.
+          RUN_MIGRATE=false
+          if [[ -n "$TARGETS" ]]; then
+            FILTERED=""
+            IFS=',' read -ra _raw <<< "$TARGETS"
+            for _t in "${_raw[@]}"; do
+              _t=$(echo "$_t" | xargs)  # trim whitespace
+              if [[ "$_t" == "migrate" ]]; then
+                RUN_MIGRATE=true
+                continue
+              fi
+              FILTERED="${FILTERED},${_t}"
+            done
+            TARGETS="${FILTERED#,}"
+          fi
+          echo "Build targets (after stripping actions): ${TARGETS:-<none>}"
+          echo "run_migrate: $RUN_MIGRATE"
+
+          # ── All services definition ──────────────────────────
+          declare -A SERVICES
+          SERVICES[app]='{"name":"app","dockerfile":"Dockerfile","context":".","target":"api"}'
+          SERVICES[protgpt2]='{"name":"protgpt2-svc","dockerfile":"services/protgpt2/Dockerfile","context":".","target":""}'
+          SERVICES[omegafold]='{"name":"omegafold-svc","dockerfile":"services/omegafold/Dockerfile","context":".","target":""}'
+          SERVICES[foldx]='{"name":"foldx-svc","dockerfile":"services/foldx/Dockerfile","context":".","target":""}'
+          SERVICES[reranker]='{"name":"reranker-svc","dockerfile":"services/reranker/Dockerfile","context":".","target":""}'
+          SERVICES[esmfold]='{"name":"esmfold-svc","dockerfile":"services/esmfold/Dockerfile","context":".","target":""}'
+          SERVICES[proteinmpnn]='{"name":"proteinmpnn-svc","dockerfile":"services/proteinmpnn/Dockerfile","context":".","target":""}'
+          SERVICES[brightness]='{"name":"brightness-svc","dockerfile":"services/brightness/Dockerfile","context":".","target":""}'
+
+          ALL_KEYS="app protgpt2 omegafold foldx reranker esmfold proteinmpnn brightness"
+
+          # ── Build matrix JSON ────────────────────────────────
+          MATRIX="[]"
+          DEPLOY_TAGS=""
+
+          if [[ "$TARGETS" == "all" ]]; then
+            # Build everything
+            for key in $ALL_KEYS; do
+              MATRIX=$(echo "$MATRIX" | jq -c --argjson svc "${SERVICES[$key]}" '. + [$svc]')
+            done
+            DEPLOY_TAGS="all"
+          elif [[ -n "$TARGETS" ]]; then
+            # Build specific services
+            IFS=',' read -ra TARGET_LIST <<< "$TARGETS"
+            for target in "${TARGET_LIST[@]}"; do
+              target=$(echo "$target" | xargs)  # trim whitespace
+              if [[ -n "${SERVICES[$target]+x}" ]]; then
+                MATRIX=$(echo "$MATRIX" | jq -c --argjson svc "${SERVICES[$target]}" '. + [$svc]')
+                DEPLOY_TAGS="${DEPLOY_TAGS},${target}"
+              else
+                echo "⚠️  Unknown service: $target (skipped)"
+              fi
+            done
+            DEPLOY_TAGS="${DEPLOY_TAGS#,}"  # trim leading comma
+          fi
+
+          MATRIX=$(echo "$MATRIX" | jq -c .)
+          COUNT=$(echo "$MATRIX" | jq -c length)
+          echo "Building $COUNT service(s): $DEPLOY_TAGS"
+
+          # ── Did we (re)build the `app` image? (migrate tag picker) ─
+          HAS_APP=false
+          if [[ "$DEPLOY_TAGS" == "all" ]] || [[ ",$DEPLOY_TAGS," == *",app,"* ]]; then
+            HAS_APP=true
+          fi
+
+          # ── Set outputs (compact JSON, single line) ──────────
+          echo "matrix={\"service\":${MATRIX}}" >> $GITHUB_OUTPUT
+          echo "has_targets=$([[ $COUNT -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "deploy_tags=$DEPLOY_TAGS" >> $GITHUB_OUTPUT
+          echo "has_app=$HAS_APP" >> $GITHUB_OUTPUT
+          echo "run_migrate=$RUN_MIGRATE" >> $GITHUB_OUTPUT
+
+          # ── Job summary ──────────────────────────────────────
+          echo "### 🎯 Build Targets" >> $GITHUB_STEP_SUMMARY
+          if [[ $COUNT -eq 0 && "$RUN_MIGRATE" != "true" ]]; then
+            echo "No \`[build:xxx]\` flag found. Skipping build." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Add a flag to your commit message:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "[build:esmfold]           → only esmfold" >> $GITHUB_STEP_SUMMARY
+            echo "[build:protgpt2,esmfold]  → specific services" >> $GITHUB_STEP_SUMMARY
+            echo "[build:all]               → everything" >> $GITHUB_STEP_SUMMARY
+            echo "[build:migrate]           → only run alembic upgrade head" >> $GITHUB_STEP_SUMMARY
+            echo "[build:app,migrate]       → build app, deploy, then migrate" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            if [[ $COUNT -gt 0 ]]; then
+              echo "Building **$COUNT** service(s): \`$DEPLOY_TAGS\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "No services to build." >> $GITHUB_STEP_SUMMARY
+            fi
+            if [[ "$RUN_MIGRATE" == "true" ]]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🗃️  \`migrate\` action requested — will run \`alembic upgrade head\` after deploy." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+  # ═══════════════════════════════════════════════════════════════
+  # Step 2: Build & Push (only selected services)
+  # ═══════════════════════════════════════════════════════════════
+  build-push:
+    name: Build ${{ matrix.service.name }}
+    needs: detect
+    if: needs.detect.outputs.has_targets == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Login to GAR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Generate image tags
+        id: meta
+        run: |
+          SHA="${{ needs.detect.outputs.commit_sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          echo "sha_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "image=${{ env.REGISTRY }}/${{ matrix.service.name }}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          target: ${{ matrix.service.target || '' }}
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:latest
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}
+          no-cache: true
+          platforms: linux/amd64
+
+      - name: Print image URI
+        run: |
+          echo "### ✅ ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.image }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════
+  # Step 3: Deploy to GKE via Helm (only update built services)
+  #
+  # Runs BEFORE migrations (see Step 4) so that on first-time /
+  # bootstrap deploys the Bitnami Postgres StatefulSet and the
+  # `synqlab-postgresql` Secret exist before Alembic tries to connect.
+  # Assumes additive migrations that don't break old pods on startup
+  # (/healthz does not touch the DB). If you introduce a destructive
+  # migration, promote migrations into a Helm pre-upgrade hook Job.
+  # ═══════════════════════════════════════════════════════════════
+  deploy:
+    name: Deploy to GKE
+    needs: [detect, build-push]
+    if: needs.detect.outputs.has_targets == 'true'
+    runs-on: ubuntu-latest
+    # Serialize deploys — only one helm upgrade can run at a time.
+    concurrency:
+      group: helm-deploy-synqlab
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: synqlab-cluster-dev
+          location: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.17.3
+
+      - name: Deploy via Helm
+        run: |
+          SHA="${{ needs.detect.outputs.commit_sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          TARGETS="${{ needs.detect.outputs.deploy_tags }}"
+
+          helm dependency build deploy/helm/synqlab
+
+          # Build --set flags only for services that were built
+          SET_FLAGS=""
+          if [[ "$TARGETS" == "all" ]]; then
+            SET_FLAGS="--set gateway.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.protgpt2.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.omegafold.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.foldx.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.reranker.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.esmfold.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.proteinmpnn.image.tag=${SHORT_SHA}"
+            SET_FLAGS="$SET_FLAGS --set tools.brightness.image.tag=${SHORT_SHA}"
+          else
+            IFS=',' read -ra BUILT <<< "$TARGETS"
+            for svc in "${BUILT[@]}"; do
+              case "$svc" in
+                app)       SET_FLAGS="$SET_FLAGS --set gateway.image.tag=${SHORT_SHA}" ;;
+                protgpt2)  SET_FLAGS="$SET_FLAGS --set tools.protgpt2.image.tag=${SHORT_SHA}" ;;
+                omegafold) SET_FLAGS="$SET_FLAGS --set tools.omegafold.image.tag=${SHORT_SHA}" ;;
+                foldx)     SET_FLAGS="$SET_FLAGS --set tools.foldx.image.tag=${SHORT_SHA}" ;;
+                reranker)  SET_FLAGS="$SET_FLAGS --set tools.reranker.image.tag=${SHORT_SHA}" ;;
+                esmfold)   SET_FLAGS="$SET_FLAGS --set tools.esmfold.image.tag=${SHORT_SHA}" ;;
+                proteinmpnn) SET_FLAGS="$SET_FLAGS --set tools.proteinmpnn.image.tag=${SHORT_SHA}" ;;
+                brightness)  SET_FLAGS="$SET_FLAGS --set tools.brightness.image.tag=${SHORT_SHA}" ;;
+              esac
+            done
+          fi
+
+          echo "Helm set flags: $SET_FLAGS"
+
+          # Unstick Helm if a previous --atomic upgrade was cancelled
+          # mid-flight (GH Actions cancel, 30m timeout during a stuck
+          # rollout, etc.). We only touch `pending-*` states — if the
+          # release is healthy we leave it alone.
+          STATUS=$(helm -n synqlab status synqlab -o json 2>/dev/null \
+            | jq -r '.info.status // "missing"')
+          echo "Current Helm release status: $STATUS"
+          case "$STATUS" in
+            pending-install|pending-upgrade|pending-rollback)
+              LAST_DEPLOYED=$(helm -n synqlab history synqlab -o json \
+                | jq -r '[.[] | select(.status=="deployed")] | last | .revision // empty')
+              if [[ -n "$LAST_DEPLOYED" ]]; then
+                echo "::warning::Helm release stuck in $STATUS — rolling back to revision $LAST_DEPLOYED"
+                helm -n synqlab rollback synqlab "$LAST_DEPLOYED" --wait --timeout 5m
+              else
+                echo "::warning::Helm release stuck in $STATUS with no prior deployed revision — uninstalling"
+                helm -n synqlab uninstall synqlab --wait --timeout 5m || true
+              fi
+              ;;
+          esac
+
+          helm upgrade --install synqlab deploy/helm/synqlab \
+            --namespace synqlab \
+            $SET_FLAGS \
+            --atomic --cleanup-on-fail --timeout 30m
+
+      - name: Verify deployment
+        run: |
+          echo "### 🚀 Deployed to GKE" >> $GITHUB_STEP_SUMMARY
+          echo "Services updated: \`${{ needs.detect.outputs.deploy_tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n synqlab >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════
+  # Step 4: Run Alembic migrations (opt-in, independent action)
+  #
+  # Runs ONLY when the commit message contains `migrate` as an action:
+  #   [build:migrate]             → no build, no deploy, migrate only
+  #   [build:app,migrate]         → build app, deploy, then migrate
+  #   [build:esmfold,migrate]     → build esmfold, deploy, then migrate
+  #
+  # Image selection:
+  #   - `app` was (re)built this commit  → use app:<SHORT_SHA>
+  #   - otherwise                        → fall back to app:latest
+  #
+  # Skip conditions (even when run_migrate=true):
+  #   - build-push ran and FAILED       → the requested image may not
+  #                                       exist in GAR; bail out.
+  #   - deploy ran and FAILED           → Postgres may not be up yet;
+  #                                       don't poison the DB.
+  # Skipped upstream jobs are treated as success (e.g. nothing to build).
+  #
+  # Serialized via a concurrency group so two pushes cannot race
+  # `alembic upgrade head` against each other.
+  # ═══════════════════════════════════════════════════════════════
+  migrate:
+    name: Run DB migrations
+    needs: [detect, build-push, deploy]
+    if: >-
+      always() &&
+      needs.detect.outputs.run_migrate == 'true' &&
+      (needs.build-push.result == 'success' || needs.build-push.result == 'skipped') &&
+      (needs.deploy.result == 'success' || needs.deploy.result == 'skipped')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: synqlab-db-migrate
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: synqlab-cluster-dev
+          location: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run alembic upgrade head
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+
+          SHA="${{ needs.detect.outputs.commit_sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          HAS_APP="${{ needs.detect.outputs.has_app }}"
+          NS="synqlab"
+
+          # Pick the image tag: SHA if app was rebuilt this commit,
+          # otherwise fall back to whatever is currently `:latest`.
+          if [[ "$HAS_APP" == "true" ]]; then
+            IMAGE_TAG="${SHORT_SHA}"
+          else
+            IMAGE_TAG="latest"
+          fi
+          IMAGE="${{ env.REGISTRY }}/app:${IMAGE_TAG}"
+          POD="alembic-migrate-${SHORT_SHA}-$(date +%s)"
+
+          echo "Using image: ${IMAGE}"
+
+          # The shared `synqlab-secrets` does NOT hold a usable DB URL
+          # (templated value contains an unexpanded "$(POSTGRES_PASSWORD)"
+          # sentinel that Kubernetes only resolves inside container env:).
+          # Build the URL here from the Bitnami-managed Postgres secret.
+          if ! kubectl get secret synqlab-postgresql -n "${NS}" >/dev/null 2>&1; then
+            echo "::error::Secret synqlab-postgresql not found in namespace ${NS}."
+            echo "::error::Run a deploy first (e.g. [build:app]) to provision Postgres."
+            exit 1
+          fi
+
+          PGPASS=$(kubectl get secret synqlab-postgresql -n "${NS}" \
+            -o jsonpath='{.data.password}' | base64 -d)
+
+          if [[ -z "${PGPASS}" ]]; then
+            echo "::error::Could not read password from secret synqlab-postgresql"
+            exit 1
+          fi
+
+          DB_URL="postgresql://synqlab:${PGPASS}@synqlab-postgresql:5432/synqlab"
+
+          # Always clean up the one-shot pod, even on failure — keeps the
+          # namespace tidy and lets the next run re-use the pod name prefix.
+          cleanup() {
+            kubectl delete pod "${POD}" -n "${NS}" \
+              --ignore-not-found --wait=false >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          echo "::group::Launch migrate pod: ${POD}"
+          # NOTE: We deliberately do NOT use `--attach --rm`. That combo
+          # silently hangs when the container exits non-zero before the
+          # log stream attaches (observed: job "ran" 1m02s then printed
+          # nothing before the workflow cancel). `run` + `logs -f` is
+          # noisier but deterministic: -f blocks until the container
+          # terminates, then returns, and we inspect the final phase.
+          kubectl run "${POD}" \
+            --namespace "${NS}" \
+            --image="${IMAGE}" \
+            --restart=Never \
+            --image-pull-policy=Always \
+            --labels="app.kubernetes.io/part-of=synqlab,app.kubernetes.io/component=migrate" \
+            --env="SYNQLAB_DB_URL=${DB_URL}" \
+            --command -- alembic upgrade head
+          echo "::endgroup::"
+
+          echo "::group::Migrate pod logs (follow)"
+          # `--pod-running-timeout` covers the scheduling + image-pull
+          # window; once the container is running, -f unblocks on exit.
+          kubectl logs -f \
+            --namespace "${NS}" \
+            --pod-running-timeout=5m \
+            "${POD}" || true
+          echo "::endgroup::"
+
+          PHASE=$(kubectl get pod "${POD}" -n "${NS}" \
+            -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+          EXIT_CODE=$(kubectl get pod "${POD}" -n "${NS}" \
+            -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}' \
+            2>/dev/null || echo "")
+          echo "Final pod phase: ${PHASE} (container exit=${EXIT_CODE:-n/a})"
+
+          if [[ "${PHASE}" != "Succeeded" ]]; then
+            echo "::error::alembic upgrade head did not complete (phase=${PHASE}, exit=${EXIT_CODE:-n/a})"
+            echo "::group::Pod describe (for debugging)"
+            kubectl describe pod "${POD}" -n "${NS}" || true
+            echo "::endgroup::"
+            exit 1
+          fi
+
+          echo "### ✅ DB migrations complete" >> $GITHUB_STEP_SUMMARY
+          echo "Image used: \`${IMAGE}\`" >> $GITHUB_STEP_SUMMARY

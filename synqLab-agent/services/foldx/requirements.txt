@@ -1,0 +1,8 @@
+# FoldX service dependencies
+# Core
+fastapi
+uvicorn
+
+# Shared schemas
+pyyaml
+pydantic

@@ -1,0 +1,12 @@
+# OmegaFold service dependencies
+# Core
+fastapi
+uvicorn
+
+# ML inference
+torch
+biopython
+
+# Shared schemas
+pyyaml
+pydantic

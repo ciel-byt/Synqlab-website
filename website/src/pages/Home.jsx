@@ -1,0 +1,79 @@
+import { Link } from "react-router-dom";
+import { ArrowLink } from "../components/ui.jsx";
+import VideoSlot from "../components/VideoSlot.jsx";
+import LoopDiagram from "../components/LoopDiagram.jsx";
+import StructureCompare from "../components/StructureCompare.jsx";
+import Marquee from "../components/Marquee.jsx";
+import { steps } from "../content.js";
+
+const explore = [
+  { to: "/platform", t: "Platform", d: "Where your team and AI agents work together, from the first idea to submission." },
+  { to: "/research", t: "Research", d: "Papers and notes behind SynqLab, with the evidence and its limits." },
+  { to: "/company", t: "Company", d: "Who we are, and who supports and works with us." },
+];
+
+export default function Home() {
+  return (
+    <>
+      <section className="hero">
+        <div className="wrap hero-split reveal">
+          <div>
+            <h1>An AI lab for biology.</h1>
+            <p className="lead">
+              SynqLab brings your team and AI agents together to design, test and track new proteins and molecules.
+            </p>
+          </div>
+          <VideoSlot title="SynqLab in 90 seconds" length="About 90 seconds" note="Recorded from the real app once the demo is ready." />
+        </div>
+      </section>
+
+      <Marquee />
+
+      <section className="soft">
+        <div className="wrap">
+          <div className="sec-head">
+            <p className="eyebrow" style={{ marginBottom: 14 }}>Mission</p>
+            <h2>Every team should own a model that gets better at their problem.</h2>
+          </div>
+          <div className="mission">
+            <ol className="flow">
+              {steps.map((s) => (
+                <li key={s.n}>
+                  <span className="dot">{s.n}</span>
+                  <div>
+                    <h3>{s.title}</h3>
+                    <p>{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <div className="mission-viz">
+              <LoopDiagram />
+            </div>
+          </div>
+          <div className="proof">
+            <div className="proof-head">
+              <p className="eyebrow">Aria · our first domain, proteins</p>
+              <h3>Aria, our protein AI, on a real request.</h3>
+            </div>
+            <StructureCompare />
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="wrap">
+          <div className="explore">
+            {explore.map((x) => (
+              <Link to={x.to} className="card" key={x.to}>
+                <h3>{x.t}</h3>
+                <p>{x.d}</p>
+                <span style={{ marginTop: 8, fontWeight: 500, color: "var(--pine)" }}>Open →</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

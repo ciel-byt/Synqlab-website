@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════════════════
+# SynqLab — Production Overrides
+# Usage: helm upgrade synqlab ./deploy/helm/synqlab -f values-prod.yaml
+# ═══════════════════════════════════════════════════════════════════
+
+gateway:
+  replicaCount: 3
+  hpa:
+    minReplicas: 3
+    maxReplicas: 20
+  pdb:
+    minAvailable: 2
+
+tools:
+  protgpt2:
+    gpu:
+      enabled: true
+      type: "nvidia-tesla-t4"
+    resources:
+      requests:
+        cpu: "2"
+        memory: 8Gi
+      limits:
+        cpu: "8"
+        memory: 16Gi
+
+  omegafold:
+    gpu:
+      enabled: true
+      type: "nvidia-tesla-t4"
+    resources:
+      requests:
+        cpu: "2"
+        memory: 8Gi
+      limits:
+        cpu: "8"
+        memory: 16Gi
+
+ingress:
+  hosts:
+    - host: "app.synqlab.ai"
+      paths:
+        - path: /
+          pathType: Prefix
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "synqlab-ingress-ip"
+    networking.gke.io/managed-certificates: "synqlab-cert"
+
+gcs:
+  assetsBucket: "project-41f6f4ea-8a21-4190-a8a-assets-prod"
+
+postgresql:
+  primary:
+    persistence:
+      size: 100Gi
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = ["pytest", "pytest-cov"]
+
+[project]
+name = "synqlab"
+version = "1.0.0"
+description = "SynqLab V1 — closed-loop protein design agent"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml",
+    "pydantic",
+    "sqlalchemy>=2.0,<2.1",
+    "psycopg2-binary",
+    "python-jose[cryptography]",
+    "passlib[bcrypt]",
+    "bcrypt>=4.0.1,<4.1",
+    "alembic",
+    "pandas",
+    "openpyxl",
+    "scikit-learn",
+    "python-multipart",
+]
+
+[project.optional-dependencies]
+ml = ["torch", "transformers>=4.40", "huggingface-hub>=0.20"]
+server = ["fastapi", "uvicorn[standard]", "httpx", "openai>=1.0"]
+
+[project.scripts]
+synqlab-server = "app.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["synqlab*", "app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = "-q"
+asyncio_mode = "auto"
