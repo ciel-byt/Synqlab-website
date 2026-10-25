@@ -1,0 +1,75 @@
+[
+ {
+  "family": "PF00237",
+  "short": "uL22",
+  "name": "Aria uL22-1",
+  "acc": "A0B9W5",
+  "spec": {
+   "Hydrophobicity": "moderate",
+   "Stability": "unstable",
+   "Structural confidence": "high",
+   "Signal peptide": "no",
+   "Molecular function": "rRNA binding"
+  },
+  "natLen": 152,
+  "desLen": 110,
+  "plddt": 87.05,
+  "tm": 0.669,
+  "identity": 42.7,
+  "evalue": "2.4e-43",
+  "gate": true,
+  "filter": true,
+  "hit": true,
+  "round": 1
+ },
+ {
+  "family": "PF00467",
+  "short": "uL24",
+  "name": "Aria uL24-1",
+  "acc": "C5D3S8",
+  "spec": {
+   "Stability": "stable",
+   "Aggregation propensity": "low",
+   "Structural confidence": "high",
+   "Transmembrane helix": "no",
+   "Domain": "PF00467",
+   "Organism": "Geobacillus sp. (strain WCH70)"
+  },
+  "natLen": 103,
+  "desLen": 107,
+  "plddt": 77.21,
+  "tm": 0.914,
+  "identity": 58.3,
+  "evalue": "7.3e-13",
+  "gate": true,
+  "filter": true,
+  "hit": true,
+  "round": 3
+ },
+ {
+  "family": "PF03652",
+  "short": "YqgF",
+  "name": "Aria YqgF-1",
+  "acc": "Q03ES0",
+  "spec": {
+   "Length": "146 residues",
+   "Hydrophobicity": "moderate",
+   "Stability": "stable",
+   "Cysteine count": "0",
+   "Structural confidence": "moderate",
+   "Transmembrane helix": "no",
+   "Domain": "PF03652",
+   "Molecular function": "hydrolase activity, acting on ester bonds"
+  },
+  "natLen": 146,
+  "desLen": 142,
+  "plddt": 73.46,
+  "tm": 0.788,
+  "identity": 34.5,
+  "evalue": "1.3999999999999998e-42",
+  "gate": true,
+  "filter": true,
+  "hit": true,
+  "round": 1
+ }
+]

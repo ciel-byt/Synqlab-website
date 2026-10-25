@@ -3,23 +3,55 @@ import { SectionHead, ArrowLink } from "../components/ui.jsx";
 import ProductPage from "../components/ProductPage.jsx";
 import MetricChart from "../components/MetricChart.jsx";
 import AriaLoop from "../components/AriaLoop.jsx";
+import AriaExamples from "../components/AriaExamples.jsx";
 
 export default function Aria() {
   return (
     <ProductPage
       eyebrow="Product · Aria"
       title="AI that designs proteins."
-      lead="Aria is a customizable AI for proteins. Tell it what you need and give it your own examples. It proposes proteins, checks them, and gets better with every round."
+      lead="Aria designs new proteins that do the same job as ones found in nature, and can improve a useful property along the way. Tell it what you need and give it your own examples. It proposes proteins, checks them, and gets better with every round."
       video={{ title: "Aria", length: "60–90 seconds", note: "A request and examples go in, checked candidates come out, then the model learns and tries again. In-silico." }}
     >
+      <section>
+        <div className="wrap">
+          <SectionHead
+            eyebrow="Why design proteins"
+            title="Keep what works. Improve what matters."
+            lead="Protein design does not always mean inventing a new function. Often it means keeping the original one and changing the protein around it."
+          />
+          <div className="why">
+            <div className="card">
+              <h3>Improve a useful property</h3>
+              <p>Humalog is insulin with two neighbouring amino acids swapped. It still does the same job, but it clumps together less, so it acts faster. It became a widely used rapid-acting insulin.</p>
+            </div>
+            <div className="card">
+              <h3>Make it instead of finding it</h3>
+              <p>Many proteins used to be taken from animals, plants or microbes. Insulin was once extracted from animal pancreas. A designed protein can be made in the lab instead.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="soft">
+        <div className="wrap">
+          <SectionHead
+            eyebrow="What Aria did"
+            title="The natural protein, and the one Aria designed."
+            lead="Three recorded requests. For each, the natural protein on the left and a new sequence that Aria wrote for the same job."
+          />
+          <AriaExamples />
+        </div>
+      </section>
+
+      <section>
         <div className="wrap">
           <SectionHead eyebrow="How it works" title="A model that learns from every round." />
           <AriaLoop />
         </div>
       </section>
 
-      <section>
+      <section className="soft">
         <div className="wrap">
           <SectionHead
             eyebrow="Try it"
@@ -33,7 +65,7 @@ export default function Aria() {
         </div>
       </section>
 
-      <section className="soft">
+      <section>
         <div className="wrap">
           <SectionHead
             eyebrow="Results"

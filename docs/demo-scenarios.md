@@ -119,3 +119,8 @@ Each prompt below is the exact specification the model was evaluated on.
 | 12 | 138 aa · charge +1 · moderate hydrophobicity · moderate aggregation | Length: 138 residues; Net charge at pH 7.4: +1; Hydrophobicity: moderate; Aggregation propensity: moderate; Structural confidence: moderate; Signal peptide: no; Enzyme class: EC 3.1 |
 
 uS13 (PF00416) has no chat (its per-round run is non-canonical). Source: `synqlab/seed/aria_chat/index.json`, built by `scripts/aria_demo/build_chat_data.py`.
+
+## Aria page: "What Aria did" examples (website)
+Three recorded designs shown next to the natural protein, one per tuned family. Built by `synqLab-agent/scripts/aria_demo/build_site_examples.py` from the product seed (`aria_chat/index.json`), output `website/src/ariaExamples.json`. Names: Aria uL22-1 (PF00237-00, round 1), Aria uL24-1 (PF00467-07, round 3), Aria YqgF-1 (PF03652-07, round 1). All pass the request gate, quality filters and the domain check; identity is to the natural reference shown.
+Wording rule: "recorded Aria output, designed and checked on the computer" until any design is lab-tested. Humalog is an analogy (a human-designed change), never presented as Aria's work.
+Video hook for the Aria script: open with the Humalog idea (two amino acids swapped, same job, faster), then cut to one natural-vs-Aria card.
