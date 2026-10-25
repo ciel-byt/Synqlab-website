@@ -181,13 +181,35 @@ def _ingest_bundled_samples(bundled_dir: Path = Path("/app/data/agent_artifacts/
         db.close()
 
 
+NEWS_REFRESH_SECONDS = 6 * 3600
+
+
+async def _news_loop() -> None:
+    """Keep the News tab fresh: fetch at boot, then every few hours. Skipped when X_BEARER_TOKEN is not set.
+
+    A failed fetch is logged and the stored news stays as it was."""
+    token = os.environ.get("X_BEARER_TOKEN", "").strip()
+    if not token:
+        return
+    from synqlab.news_refresh import refresh
+    handle = os.environ.get("NEWS_X_HANDLE", "BiologyAIDaily")
+    log = logging.getLogger(__name__)
+    while True:
+        try:
+            log.info("News refreshed: %d posts", await asyncio.to_thread(refresh, handle, token))
+        except Exception:  # noqa: BLE001
+            log.exception("News refresh failed")
+        await asyncio.sleep(NEWS_REFRESH_SECONDS)
+
+
 @asynccontextmanager
 async def lifespan(_app):
-    """FastAPI lifespan handler — ingest bundled samples at boot."""
+    """FastAPI lifespan handler — ingest bundled samples at boot, keep News fresh."""
     _ingest_bundled_samples()
     ensure_bootstrap_admin()
+    news = asyncio.create_task(_news_loop())
     yield
-    # Shutdown: nothing for now.
+    news.cancel()
 
 
 # ---------------------------------------------------------------------------

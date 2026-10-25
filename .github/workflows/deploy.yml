@@ -61,4 +61,5 @@ jobs:
             [{"name":"SYNQLAB_DB_URL","valueFrom":"${{ secrets.SYNQLAB_DB_URL_SECRET_ARN }}"},
             {"name":"SYNQLAB_JWT_SECRET","valueFrom":"${{ secrets.SYNQLAB_JWT_SECRET_ARN }}"},
             {"name":"SYNQLAB_ADMIN_EMAIL","valueFrom":"${{ secrets.SYNQLAB_ADMIN_EMAIL_SECRET_ARN }}"},
-            {"name":"SYNQLAB_ADMIN_PASSWORD","valueFrom":"${{ secrets.SYNQLAB_ADMIN_PASSWORD_SECRET_ARN }}"}]
+            {"name":"SYNQLAB_ADMIN_PASSWORD","valueFrom":"${{ secrets.SYNQLAB_ADMIN_PASSWORD_SECRET_ARN }}"},
+            {"name":"X_BEARER_TOKEN","valueFrom":"${{ secrets.SYNQLAB_X_TOKEN_SECRET_ARN }}"}]

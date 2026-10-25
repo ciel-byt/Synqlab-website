@@ -56,7 +56,33 @@ Settings → Secrets and variables → Actions:
 - `deploy` job: only runs `if: contains(github.event.head_commit.message, 'deploy')` — assumes AWS role via OIDC, pushes image to ECR, calls `aws-actions/amazon-ecs-deploy-express-service` action (creates/updates the ECS service, auto-provisions ALB on first run).
 - Key input: `container-port` must match what the app actually listens on (default assumed is 80 — ours is 8000, had to set explicitly).
 
-## 7. Custom domain (GoDaddy → ALB)
+## Architecture (SynqLab, current)
+
+```
+                    git push ("deploy" in commit message)
+                                   │
+                                   ▼
+                       GitHub Actions (OIDC, no keys)
+                  build Dockerfile.synqlab ─► push to ECR
+                                   │  deploy
+                                   ▼
+ Visitor ─► www.synqlab.ai ─► CloudFront ─► ECS Express service "synqlab"
+ (GoDaddy   (CNAME)          (HTTPS, no      (load balancer + 1 Fargate task)
+  DNS)                        caching)                   │
+ synqlab.ai ─ forwards ─► www                            │ one container:
+                                                         │  /            website (React)
+                                                         │  /login /lab  product (React)
+                                                         │  /api         FastAPI
+                                                         ▼
+                              RDS Postgres (private, VPC only) ◄─ Secrets Manager
+                              (users, orgs, runs, papers, news)    (db url, jwt, admin)
+```
+
+- **Domain:** `www` CNAME → CloudFront (`infra/aws_cloudfront.sh`). CloudFront points at the service's own `sy-….on.aws` address, which does not change between releases, so releases cannot break the domain. Do not edit the Express load balancer rules by hand.
+- **Releases:** the commit-message rule above; the task runs `alembic upgrade head` then uvicorn.
+- **Known gaps:** uploads live on the container's disk (lost on release; S3 needed); the old `todo-app` service still runs (~$25/mo).
+
+## 7. Custom domain (GoDaddy → ALB) — superseded by CloudFront, kept for reference
 ```bash
 # Cert for the subdomain, DNS-validated
 aws acm request-certificate --domain-name www.yourdomain.com --validation-method DNS --region us-east-1
@@ -121,6 +147,8 @@ aws iam put-role-policy --role-name ecsTaskExecutionRole --policy-name synqlab-s
 ### New GitHub repository secrets
 Existing ones stay: `AWS_ROLE_ARN`, `ECS_EXECUTION_ROLE_ARN`, `ECS_INFRASTRUCTURE_ROLE_ARN`. Add the four secret ARNs from step 4:
 `SYNQLAB_DB_URL_SECRET_ARN`, `SYNQLAB_JWT_SECRET_ARN`, `SYNQLAB_ADMIN_EMAIL_SECRET_ARN`, `SYNQLAB_ADMIN_PASSWORD_SECRET_ARN`.
+
+News tab: the server refreshes it by itself (boot + every 6 h) when `X_BEARER_TOKEN` is set. Store the token as secret `synqlab/x-bearer-token` and put its ARN in the GitHub secret `SYNQLAB_X_TOKEN_SECRET_ARN` (the deploy fails without it).
 
 ### What the workflow does
 - Every push to `main` builds `Dockerfile.synqlab` (no deploy).

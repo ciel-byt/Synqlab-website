@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-time AWS setup for SynqLab (ECR repo, database, secrets, permissions, GitHub secrets).
 # Safe to run again: anything that already exists is reused, nothing is deleted.
-# Run from anywhere:  ./aws_setup.sh
+# Run from anywhere:  ./infra/aws_setup.sh
 set -euo pipefail
 
 export AWS_REGION="${AWS_REGION:-us-east-1}"
