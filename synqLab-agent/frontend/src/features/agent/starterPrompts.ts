@@ -32,7 +32,7 @@ const PROMPTS: StarterPrompt[] = [
     label: '✦ Design brighter GFP11 variants',
     message:
       'I have split-GFP assay brightness data for 113 GFP11 variants. Design a closed-loop optimization workflow that proposes new variants with higher fluorescence while preserving GFP1-10 binding and thermal stability. Use AlphaFold-Multimer for structure prediction. Run three rounds of 50 candidates each and return the top five for wet-lab validation.',
-    demoRoute: '/lab/pipelines/gfp11-demo/run',
+    demoRoute: '/lab/pipelines/gfp11/run',
   },
 ]
 

@@ -2,7 +2,7 @@
  * Gfp11RunPage — a fully integrated mock pipeline run for the GFP11
  * brightness optimisation demo.
  *
- * Route: /lab/pipelines/gfp11-demo/run
+ * Route: /lab/pipelines/gfp11/run
  *
  * Everything is scripted/simulated. No backend calls are made.
  * The page uses the same UI primitives as PipelinePage so it looks
@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { load3Dmol } from '@/lib/load3dmol'
 import { useNavigate } from 'react-router-dom'
 import {
   Loader2, StopCircle, CheckCircle2, XCircle,
@@ -139,20 +140,7 @@ function MockPdbViewer({ visible }: { visible: boolean }) {
     let viewer: any = null
 
     async function init() {
-      if (!window.$3Dmol) {
-        await new Promise<void>((resolve, reject) => {
-          if (document.querySelector('script[data-3dmol]')) {
-            const wait = () => (window.$3Dmol ? resolve() : setTimeout(wait, 50))
-            return wait()
-          }
-          const s = document.createElement('script')
-          s.setAttribute('data-3dmol', '1')
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js'
-          s.onload = () => resolve()
-          s.onerror = () => reject(new Error('Failed to load 3Dmol'))
-          document.head.appendChild(s)
-        })
-      }
+      await load3Dmol()
       if (cancelled || !containerRef.current) return
 
       await new Promise<void>((resolve) => {

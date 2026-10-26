@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { load3Dmol } from '@/lib/load3dmol'
 
 declare global {
   interface Window {
@@ -29,21 +30,7 @@ export function PdbViewer({ pdbPath }: { pdbPath: string }) {
       setStatus('loading')
       setErrorMsg('')
 
-      // Load 3Dmol.js from CDN once
-      if (!window.$3Dmol) {
-        await new Promise<void>((resolve, reject) => {
-          if (document.querySelector('script[data-3dmol]')) {
-            const wait = () => window.$3Dmol ? resolve() : setTimeout(wait, 50)
-            return wait()
-          }
-          const s = document.createElement('script')
-          s.setAttribute('data-3dmol', '1')
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js'
-          s.onload = () => resolve()
-          s.onerror = () => reject(new Error('Failed to load 3Dmol.js from CDN'))
-          document.head.appendChild(s)
-        })
-      }
+      await load3Dmol()
 
       if (cancelled) return
 

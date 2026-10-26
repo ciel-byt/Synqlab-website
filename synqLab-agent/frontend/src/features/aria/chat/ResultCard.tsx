@@ -56,8 +56,8 @@ export function ResultCard({ c, compact }: { c: Card; compact?: boolean }) {
             <Row ok={r.hit} label="Domain">{c.family} {r.hit == null ? '–' : r.hit ? `detected${r.evalue ? ` (E ${r.evalue})` : ''}` : 'not detected'}</Row>
             <Row label="Closest natural">{c.reference.acc}{r.identity != null ? `, ${r.identity}% identical` : ''}</Row>
             <Row label="Charge, GRAVY"><b>{c.props.charge > 0 ? '+' : ''}{c.props.charge}</b>, {c.props.gravy}, {c.props.cys} cysteines</Row>
-            <Row label="GO function">{c.go.length ? c.go.join(', ') : '–'} <span className="text-muted-foreground">(predicted, demo)</span></Row>
-            <Row label="EC class">{c.ec.length ? c.ec.join(', ') : 'none annotated'} <span className="text-muted-foreground">(predicted, demo)</span></Row>
+            <Row label="GO function">{c.go.length ? c.go.join(', ') : '–'} <span className="text-muted-foreground">(predicted)</span></Row>
+            <Row label="EC class">{c.ec.length ? c.ec.join(', ') : 'none annotated'} <span className="text-muted-foreground">(predicted)</span></Row>
           </div>
         </div>
       </div>

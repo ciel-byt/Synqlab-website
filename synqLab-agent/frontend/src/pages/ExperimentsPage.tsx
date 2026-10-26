@@ -213,7 +213,7 @@ function ExperimentDetail({ exp }: { exp: DAGPipelineRun }) {
   )
 }
 
-const MOCK_RUN_ID = 'gfp11-demo'
+const MOCK_RUN_ID = 'gfp11'
 
 export function ExperimentsPage() {
   const navigate = useNavigate()
@@ -312,12 +312,9 @@ export function ExperimentsPage() {
             <SidebarListItem
               active={selectedMock}
               title="GFP11 Optimization"
-              trailing={
-                <Badge variant="secondary" className="scale-90">demo</Badge>
-              }
               meta={
                 <div className="flex gap-3 text-[10px] font-mono text-muted-foreground truncate pr-6 mt-0.5">
-                  <span>gfp11-de</span>
+                  <span>gfp11</span>
                   <span>3/3 R</span>
                 </div>
               }

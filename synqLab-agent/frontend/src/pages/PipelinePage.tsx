@@ -358,7 +358,7 @@ export function PipelinePage() {
 
     // Demo intercept — GFP11 pipeline goes to the mock experiment run page
     if (selectedId === 'gfp11') {
-      navigate('/lab/experiments?run=gfp11-demo')
+      navigate('/lab/experiments?run=gfp11')
       return
     }
 

@@ -83,7 +83,8 @@ export default function App() {
             <Route path="tools" element={<Navigate to="/lab/computers" replace />} />
             <Route path="tools/:toolId" element={<Navigate to="/lab/computers" replace />} />
             <Route path="pipelines" element={<PipelinePage />} />
-            <Route path="pipelines/gfp11-demo/run" element={<Gfp11RunPage />} />
+            <Route path="pipelines/gfp11/run" element={<Gfp11RunPage />} />
+            <Route path="pipelines/gfp11-demo/run" element={<Navigate to="/lab/pipelines/gfp11/run" replace />} />
             <Route path="pipelines/:pipelineId/edit" element={<AgentDesignerCanvasPage />} />
             <Route path="flows" element={<Navigate to="/docs/flows" replace />} />
             <Route path="agents" element={<AgentsLayout />}>

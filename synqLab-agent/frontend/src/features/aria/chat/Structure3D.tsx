@@ -1,22 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { load3Dmol } from '@/lib/load3dmol'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const d3 = () => (window as unknown as { $3Dmol?: any }).$3Dmol
-
-const SRC = 'https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js'
-function load3Dmol(): Promise<void> {
-  if (d3()) return Promise.resolve()
-  return new Promise((resolve, reject) => {
-    const have = document.querySelector('script[data-3dmol]')
-    if (have) { const wait = () => (d3() ? resolve() : setTimeout(wait, 50)); return wait() }
-    const s = document.createElement('script')
-    s.setAttribute('data-3dmol', '1'); s.src = SRC
-    s.onload = () => resolve(); s.onerror = () => reject(new Error('3Dmol failed to load'))
-    document.head.appendChild(s)
-  })
-}
 
 // AlphaFold-style confidence colours.
 const conf = (b: number) => (b > 90 ? '#0053d6' : b > 70 ? '#65cbf3' : b > 50 ? '#ffdb13' : '#ff7d45')
