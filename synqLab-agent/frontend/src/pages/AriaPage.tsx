@@ -35,7 +35,7 @@ export function AriaPage() {
   const cB = panel?.kind === 'compare' ? find(panel.b) : undefined
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-5 p-6">
+    <div className="w-full space-y-5 p-6">
       <PageHeader title="Aria" actions={<Button onClick={() => startNew(null)}>New model</Button>} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'models' | 'use')}>

@@ -71,7 +71,7 @@ Before I design the pipeline, I need your experimental dataset. Please upload yo
 - Fit the brightness distribution
 - Choose the right generative model architecture
 
-**Upload your \`gfp11_brightness.xlsx\` file** (sequences + brightness values required).`
+**Upload your data** (a spreadsheet with sequences and measured values).`
 
 const READ_MSG = `Reading \`gfp11_brightness.xlsx\`…
 
@@ -2356,7 +2356,7 @@ export function MockGfp11Chat({ sessionId }: { sessionId: string }) {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-[12px] text-primary/70 hover:text-primary font-medium transition-all group"
               >
                 <Upload size={14} className="group-hover:translate-y-[-1px] transition-transform" />
-                Upload gfp11_brightness.xlsx
+                Upload your data
               </button>
             )}
             {phase === 'uploading' && (

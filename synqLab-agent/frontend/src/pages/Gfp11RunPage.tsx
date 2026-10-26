@@ -384,7 +384,7 @@ export function Gfp11RunPage() {
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-background">
-      <div className="mx-auto max-w-[1300px] p-4 md:p-6 space-y-4">
+      <div className="w-full p-4 md:p-6 space-y-4">
 
         {/* ── Header ── */}
         <div className="flex items-center gap-3">
