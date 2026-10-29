@@ -667,3 +667,78 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 /* Real video in a product hero. */
 .video-player { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 24px 60px -28px rgba(26, 43, 36, 0.38); }
 .video-player video { display: block; width: 100%; height: auto; }
+
+/* ---------------------------------------------------------------
+   Phone and tablet.
+   Kept last on purpose: several layout rules above are declared
+   after the older breakpoints, so anything responsive has to come
+   after them to win the cascade.
+   --------------------------------------------------------------- */
+
+/* Grid and flex children shrink below their content instead of
+   pushing a wide screenshot out of the frame. */
+.hero-split > *, .mission > *, .split-2 > *, .proof-body > *, .al-stage > * { min-width: 0; }
+
+/* Tablet, landscape phone */
+@media (max-width: 1024px) {
+  .explore { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .proof-body { grid-template-columns: 1fr; }
+  .fgrid { grid-template-columns: 1fr 1fr; }
+  .hero .wrap { max-width: none; }
+}
+
+/* One column: the screenshots and the video need the full width */
+@media (max-width: 900px) {
+  .hero-split { grid-template-columns: 1fr; gap: 36px; }
+  .hero { padding: 48px 0 48px; }
+  .hero-copy { max-width: none; }
+  .hero-copy h1, .hero-split h1 { max-width: 18ch; font-size: clamp(2rem, 6.4vw, 2.9rem); }
+  .v3 { grid-template-columns: 1fr; }
+  .v3-canvas { height: 260px; }
+  .book-embed { min-height: 620px; }
+}
+
+/* Phone */
+@media (max-width: 700px) {
+  section { padding: 56px 0; }
+  .sec-head { margin-bottom: 32px; }
+  .explore, .grid-3, .grid-4, .fgrid { grid-template-columns: 1fr; }
+  .fgrid { gap: 24px; }
+  .al-steps { grid-template-columns: 1fr; }
+  .card { padding: 22px; }
+  .band { padding: 36px 20px; border-radius: 22px; }
+  .person { padding: 32px 20px; }
+  .avatar { width: 132px; height: 132px; }
+  .mc { padding: 18px 16px 14px; }
+  .proof { margin-top: 36px; padding-top: 28px; }
+  .marquee { gap: 16px; padding: 12px var(--gutter); }
+  .fbottom { margin-top: 28px; }
+  .hero-cta .btn, .cta-row .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Rows of pills and tabs scroll sideways rather than stacking */
+@media (max-width: 760px) {
+  .rtabs, .tabs, .tchips, .mc-chips, .vz-steps {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rtabs::-webkit-scrollbar, .tabs::-webkit-scrollbar, .tchips::-webkit-scrollbar,
+  .mc-chips::-webkit-scrollbar, .vz-steps::-webkit-scrollbar { display: none; }
+  .rtab, .tab, .tchip, .chip, .vz-step { flex: none; }
+  .vz-steps { justify-content: flex-start; }
+}
+
+/* Touch: targets you can actually hit, and controls that do not
+   depend on hover to appear. */
+@media (hover: none), (pointer: coarse) {
+  .stage-arrow { opacity: 1; width: 44px; height: 44px; }
+  .stage-dot { width: 36px; height: 36px; border-radius: 9px; font-size: 0.78rem; }
+  .stage-dots { gap: 10px; }
+  .plinks a { width: 46px; height: 46px; }
+  .menu-btn { padding: 10px 14px; }
+  .nav-links.open a.link, .nav-links.open .dd-btn { padding: 10px 0; }
+  .dd-item { padding: 12px 10px; }
+}
