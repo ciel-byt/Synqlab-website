@@ -39,9 +39,8 @@ export const nav = [
     to: "/platform",
     label: "Products",
     children: [
+      { to: "/aria", icon: "aria", label: "Aria", note: "Self-improving protein design" },
       { to: "/platform", icon: "synqlab", label: "SynqLab", note: "The agentic platform" },
-      { to: "/aria", icon: "aria", label: "Aria", note: "Controllable protein design" },
-      { to: "/lyra", icon: "lyra", label: "Lyra", note: "Small molecules · soon" },
     ],
   },
   {

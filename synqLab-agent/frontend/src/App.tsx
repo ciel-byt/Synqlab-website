@@ -37,7 +37,6 @@ import { MemberDetailView } from './features/workspace/views/MemberDetailView'
 
 // Lab sub-views
 import { AriaPage } from './pages/AriaPage'
-import { LyraPage } from './pages/LyraPage'
 import { LabOverviewView } from './features/lab/views/LabOverviewView'
 import { ToolsConsoleView } from './features/tools/views/ToolsConsoleView'
 import { Gfp11RunPage } from './pages/Gfp11RunPage'
@@ -98,7 +97,6 @@ export default function App() {
               <Route path="skills" element={<SkillsPage />} />
             </Route>
             <Route path="aria" element={<AriaPage />} />
-            <Route path="lyra" element={<LyraPage />} />
             <Route path="experiments" element={<ExperimentsPage />} />
             <Route path="models" element={<ModelsPage />} />
             <Route path="skills" element={<Navigate to="/lab/agents/skills" replace />} />

@@ -7,7 +7,8 @@ import Marquee from "../components/Marquee.jsx";
 import { steps } from "../content.js";
 
 const explore = [
-  { to: "/platform", t: "Platform", d: "Where your team and AI agents work together, from the first idea to submission." },
+  { to: "/aria", t: "Aria", d: "Our self-improving agent for protein design, with real designed proteins." },
+  { to: "/platform", t: "SynqLab", d: "The agent platform: agents, tools and compute in one place, with every step recorded." },
   { to: "/research", t: "Research", d: "Papers and notes behind SynqLab, with the evidence and its limits." },
   { to: "/company", t: "Company", d: "Who we are, and who supports and works with us." },
 ];
@@ -18,12 +19,12 @@ export default function Home() {
       <section className="hero">
         <div className="wrap hero-split reveal">
           <div>
-            <h1>An AI lab for biology.</h1>
+            <h1>Self-improving AI agents for biology.</h1>
             <p className="lead">
-              SynqLab brings your team and AI agents together to design, test and track new proteins and molecules.
+              Aria, our first agent, designs proteins that don't exist in nature from your own data. Use it on its own, or on SynqLab, our agent platform.
             </p>
           </div>
-          <VideoSlot title="SynqLab in 90 seconds" length="About 90 seconds" note="Recorded from the real app once the demo is ready." />
+          <VideoSlot title="Aria in 90 seconds" length="About 90 seconds" note="Recorded from the real app once the demo is ready." />
         </div>
       </section>
 
@@ -33,7 +34,7 @@ export default function Home() {
         <div className="wrap">
           <div className="sec-head">
             <p className="eyebrow" style={{ marginBottom: 14 }}>Mission</p>
-            <h2>Every team should own a model that gets better at their problem.</h2>
+            <h2>Every lab should own a model that gets better at its problem.</h2>
           </div>
           <div className="mission">
             <ol className="flow">

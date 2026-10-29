@@ -15,13 +15,13 @@ export default function Platform() {
   return (
     <ProductPage
       eyebrow="Product · SynqLab"
-      title="An AI lab for biology."
-      lead="One workspace where your team and AI agents design, test and track new proteins and molecules, from the first idea to submission."
+      title="Run biology agents in one place."
+      lead="SynqLab is our agentic platform: agents, tools and compute in one workspace, with every step recorded. Use it with Aria, or on its own."
       video={{ title: "SynqLab", length: "90–120 seconds", note: "Open a project, give it a goal, watch agents and tools run, and see the record build." }}
     >
       <section>
         <div className="wrap">
-          <SectionHead eyebrow="Architecture" title="Agents do the work. The platform runs everything around them." lead="Aria and Lyra are agents on SynqLab. New domains plug into the same platform, the same records and the same controls." />
+          <SectionHead eyebrow="Architecture" title="Agents do the work. The platform runs everything around them." lead="Aria is an agent on SynqLab. New agents plug into the same platform, the same records and the same controls." />
           <PlatformFlow />
         </div>
       </section>

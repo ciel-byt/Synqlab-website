@@ -97,14 +97,13 @@ function Footer() {
               Synq<i>Lab</i>
             </Link>
             <p style={{ color: "var(--mute)", marginTop: 12, maxWidth: "20rem" }}>
-              An AI lab for biology.
+              Self-improving AI agents for biology.
             </p>
           </div>
           <div>
             <h4>Product</h4>
-            <Link to="/platform">SynqLab</Link>
             <Link to="/aria">Aria</Link>
-            <Link to="/lyra">Lyra</Link>
+            <Link to="/platform">SynqLab</Link>
           </div>
           <div>
             <h4>Research</h4>

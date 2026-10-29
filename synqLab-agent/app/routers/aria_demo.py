@@ -332,7 +332,7 @@ class RequestIn(BaseModel):
     problem: str = Field(min_length=10, max_length=4000)
     data_description: str | None = Field(default=None, max_length=4000)
     family: str | None = Field(default=None, max_length=20)
-    source: str = Field(default="aria-demo", pattern="^(aria-demo|lyra-interest)$")
+    source: str = Field(default="aria-demo", pattern="^aria-demo$")
 
 
 @router.post("/requests", status_code=201)

@@ -612,7 +612,7 @@ _SITE_DIR = _STATIC_DIR / "site"
 if _SITE_DIR.is_dir():
     app.mount("/site", StaticFiles(directory=str(_SITE_DIR)), name="site")
 
-_SITE_PATHS = ["/", "/platform", "/aria", "/lyra", "/research", "/research/{slug}", "/company", "/book-a-call"]
+_SITE_PATHS = ["/", "/platform", "/aria", "/research", "/research/{slug}", "/company", "/book-a-call"]
 
 
 def _site_index() -> FileResponse:

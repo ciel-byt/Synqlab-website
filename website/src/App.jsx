@@ -3,7 +3,6 @@ import Layout from "./components/Layout.jsx";
 import Home from "./pages/Home.jsx";
 import Platform from "./pages/Platform.jsx";
 import Aria from "./pages/Aria.jsx";
-import Lyra from "./pages/Lyra.jsx";
 import Research from "./pages/Research.jsx";
 import ResearchItem from "./pages/ResearchItem.jsx";
 import Company from "./pages/Company.jsx";
@@ -18,7 +17,6 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="platform" element={<Platform />} />
         <Route path="aria" element={<Aria />} />
-        <Route path="lyra" element={<Lyra />} />
         <Route path="research" element={<Research />} />
         <Route path="research/:slug" element={<ResearchItem />} />
         <Route path="company" element={<Company />} />

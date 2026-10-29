@@ -15,7 +15,7 @@ npm run build    # → dist/
 |---|---|
 | `/` | Home: mission, Aria example, explore cards |
 | `/platform` | SynqLab: clickable animated architecture, team-workspace timeline, principles |
-| `/aria`, `/lyra` | Product pages (shared `ProductPage` template). Lyra is "in development" |
+| `/aria` | Product page (shared `ProductPage` template) |
 | `/research`, `/research/:slug` | Papers, Blog, News tabs (blog and news empty on purpose) |
 | `/company` | Team, supporters and collaborators |
 | `/book-a-call` | Form + calendar placeholder |
@@ -56,7 +56,7 @@ cd ../synqLab-agent/frontend && npx vite build   # product SPA → app/static/di
 cd .. && SYNQLAB_DB_URL=postgresql://… SYNQLAB_JWT_SECRET=… .venv/bin/python -m uvicorn app.main:app --port 8010
 ```
 
-`/`, `/platform`, `/aria`, `/lyra`, `/research`, `/company`, `/book-a-call` serve the website; everything else is the product. `Dockerfile.synqlab` (repo root) builds both into one image. Not deployed yet.
+`/`, `/platform`, `/aria`, `/research`, `/company`, `/book-a-call` serve the website; everything else is the product. `Dockerfile.synqlab` (repo root) builds both into one image. Not deployed yet.
 
 ## To do
 - Replace `VideoSlot` with embeds, add paper PDF links, restyle the product's login and app to the brand.

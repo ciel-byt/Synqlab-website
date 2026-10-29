@@ -57,7 +57,7 @@ export function LoginPage() {
           submitting={submitting}
         />
         <p className="text-center text-[11px] text-muted-foreground/50">
-          An AI lab for biology
+          Self-improving AI agents for biology
         </p>
       </div>
     </div>

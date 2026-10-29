@@ -23,13 +23,6 @@ export const NODES = {
     status: "Available",
     to: "/aria",
   },
-  lyra: {
-    name: "Lyra",
-    what: "The small-molecule design agent, built on the same platform.",
-    bullets: ["Brings the same customization loop to small molecules", "Uses the same tools, records and controls"],
-    status: "In development",
-    to: "/lyra",
-  },
   literature: {
     name: "Literature",
     what: "Searches and synthesizes papers, so designs start from what is already known.",

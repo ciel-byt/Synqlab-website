@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 /** "Describe your problem" form. Saves to /api/aria/requests (signed-in users only). */
-export function RequestForm({ family, famName, source = 'aria-demo', intro }: { family?: string; famName?: string; source?: 'aria-demo' | 'lyra-interest'; intro?: string }) {
+export function RequestForm({ family, famName, source = 'aria-demo', intro }: { family?: string; famName?: string; source?: 'aria-demo'; intro?: string }) {
   const { user } = useAuth()
   const [f, setF] = useState({ email: user?.email ?? '', name: user?.full_name ?? '', org: '', problem: '', data_description: '' })
   const [state, setState] = useState<{ s: 'idle' | 'sending' | 'done' | 'error'; msg?: string }>({ s: 'idle' })

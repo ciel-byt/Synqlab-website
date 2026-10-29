@@ -1,11 +1,10 @@
-import { RefreshCw, Dna, Hexagon, FileText, PenLine, Newspaper, Info, Users } from "lucide-react";
+import { RefreshCw, Dna, FileText, PenLine, Newspaper, Info, Users } from "lucide-react";
 
 // One icon per destination, all the same stroke and color (see --icon-tile-* in theme.css).
 // Products each get a different glyph, not a different color.
 const MAP = {
   synqlab: RefreshCw,
   aria: Dna,
-  lyra: Hexagon,
   papers: FileText,
   blog: PenLine,
   news: Newspaper,

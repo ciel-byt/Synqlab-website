@@ -4,16 +4,43 @@ import ProductPage from "../components/ProductPage.jsx";
 import MetricChart from "../components/MetricChart.jsx";
 import AriaLoop from "../components/AriaLoop.jsx";
 import AriaExamples from "../components/AriaExamples.jsx";
+import AriaRounds from "../components/AriaRounds.jsx";
 
 export default function Aria() {
   return (
     <ProductPage
       eyebrow="Product · Aria"
       title="AI that designs proteins."
-      lead="Aria designs new proteins that do the same job as ones found in nature, and can improve a useful property along the way. Tell it what you need and give it your own examples. It proposes proteins, checks them, and gets better with every round."
+      lead="Aria is a self-improving framework for protein design. It turns your own data into a private model, designs new proteins that do the jobs you ask for, checks them, and gets better with every round."
       video={{ title: "Aria", length: "60–90 seconds", note: "A request and examples go in, checked candidates come out, then the model learns and tries again. In-silico." }}
     >
+      <section className="soft">
+        <div className="wrap">
+          <SectionHead
+            eyebrow="What Aria did"
+            title="The natural protein, and the one Aria designed."
+            lead="Three recorded requests. For each, the natural protein on the left and a new sequence that Aria wrote for the same job."
+          />
+          <AriaExamples />
+        </div>
+      </section>
+
       <section>
+        <div className="wrap">
+          <SectionHead
+            eyebrow="It improves itself"
+            title="Better with every round."
+            lead="Each round, Aria checks its own designs, finds where the model is weak and tunes it. Here is how often its designs were recognised as the right protein family."
+          />
+          <AriaRounds />
+          <div style={{ marginTop: 56 }}>
+            <SectionHead eyebrow="How it works" title="A model that learns from every round." />
+            <AriaLoop />
+          </div>
+        </div>
+      </section>
+
+      <section className="soft">
         <div className="wrap">
           <SectionHead
             eyebrow="Why design proteins"
@@ -33,39 +60,35 @@ export default function Aria() {
         </div>
       </section>
 
-      <section className="soft">
-        <div className="wrap">
-          <SectionHead
-            eyebrow="What Aria did"
-            title="The natural protein, and the one Aria designed."
-            lead="Three recorded requests. For each, the natural protein on the left and a new sequence that Aria wrote for the same job."
-          />
-          <AriaExamples />
-        </div>
-      </section>
-
       <section>
         <div className="wrap">
-          <SectionHead eyebrow="How it works" title="A model that learns from every round." />
-          <AriaLoop />
-        </div>
-      </section>
-
-      <section className="soft">
-        <div className="wrap">
           <SectionHead
-            eyebrow="Try it"
-            title="Want to try Aria?"
-            lead="Watch the demo video above. To use it yourself, sign in, or book a call and we will set you up."
+            eyebrow="Use it"
+            title="Built for biotech, pharma and research labs."
+            lead="Bring your own protein data. Aria builds a model for your target that you host and own."
           />
+          <div className="explore">
+            <div className="card">
+              <h3>On its own</h3>
+              <p>Host the model yourself and keep the weights. Aria is a framework you can run without anything else from us.</p>
+            </div>
+            <div className="card">
+              <h3>On SynqLab</h3>
+              <p>Run Aria with agents, tools and compute in one workspace, with every step recorded toward a regulatory filing.</p>
+            </div>
+            <div className="card">
+              <h3>With you</h3>
+              <p>Book a call and we will set Aria up on your protein and your data.</p>
+            </div>
+          </div>
           <div className="cta-row">
-            <a className="btn" href="/login">Sign in</a>
-            <Link className="btn ghost" to="/book-a-call">Book a call</Link>
+            <Link className="btn" to="/book-a-call">Book a call</Link>
+            <a className="btn ghost" href="/login">Sign in</a>
           </div>
         </div>
       </section>
 
-      <section>
+      <section className="soft">
         <div className="wrap">
           <SectionHead
             eyebrow="Results"

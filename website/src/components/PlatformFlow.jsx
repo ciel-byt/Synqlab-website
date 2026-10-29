@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Upload, Cpu, Dna, Hexagon, BookOpen, FileText, BarChart3, FlaskConical, Box, CircleCheck, AlignLeft, Terminal, Sparkles, Puzzle, Activity, Server, Zap, Wallet, Bell, Layers, Monitor, Droplet } from "lucide-react";
+import { Upload, Cpu, Dna, BookOpen, FileText, BarChart3, FlaskConical, Box, CircleCheck, AlignLeft, Terminal, Sparkles, Puzzle, Activity, Server, Zap, Wallet, Bell, Layers, Monitor, Droplet } from "lucide-react";
 import { NODES } from "./platformNodes.js";
 
 // Animated, clickable SynqLab architecture, top to bottom. Everything is always visible and readable;
@@ -16,7 +16,7 @@ const STEPS = [
   { t: "Learn", d: "What was learned goes back to the agent, so the next round starts smarter.", node: "agent" },
 ];
 
-const ICONS = { goal: Upload, aria: Dna, lyra: Hexagon, literature: BookOpen, reports: FileText, data: BarChart3, lab: FlaskConical, structure: Box, scoring: CircleCheck, design: Sparkles, docking: Puzzle, dynamics: Activity, seqdb: AlignLeft, code: Terminal, scheduler: Server, gpu: Zap, budget: Wallet, notify: Bell, store: Layers, insilico: Monitor, invitro: Droplet };
+const ICONS = { goal: Upload, aria: Dna, literature: BookOpen, reports: FileText, data: BarChart3, lab: FlaskConical, structure: Box, scoring: CircleCheck, design: Sparkles, docking: Puzzle, dynamics: Activity, seqdb: AlignLeft, code: Terminal, scheduler: Server, gpu: Zap, budget: Wallet, notify: Bell, store: Layers, insilico: Monitor, invitro: Droplet };
 
 const CX = 459;
 const X0 = [24, 334, 644];
@@ -29,7 +29,7 @@ const Y_STORE = 770;
 const Y_OUT = 935;
 
 const COLUMNS = [
-  { head: "SPECIALIST AGENTS", items: [["aria", "Protein design"], ["lyra", "Small molecules"], ["literature", "Search and synthesis"], ["reports", "Deep research"], ["data", "Tables and plots"], ["lab", "In vitro"]] },
+  { head: "SPECIALIST AGENTS", items: [["aria", "Protein design"], ["literature", "Search and synthesis"], ["reports", "Deep research"], ["data", "Tables and plots"], ["lab", "In vitro"]] },
   { head: "DIRECT TOOLS", items: [["structure", "AlphaFold · Boltz · Chai-1"], ["design", "RFdiffusion · ProteinMPNN"], ["docking", "DiffDock · AutoDock Vina"], ["dynamics", "GROMACS"], ["scoring", "pLDDT · ipTM · Rosetta"], ["seqdb", "MMseqs2 · InterPro"]] },
   { head: "COMPUTE AND OPS", items: [["scheduler", "HPC and cloud"], ["gpu", "Cloud GPUs"], ["code", "Python · bash"], ["budget", "Spend limits"], ["notify", "Alerts and handoff"]] },
 ];

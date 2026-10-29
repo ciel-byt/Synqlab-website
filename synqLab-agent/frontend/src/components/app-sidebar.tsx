@@ -85,7 +85,6 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { title: 'SynqLab agent',    icon: Workflow,    href: '/lab/agents' },
       { title: 'Aria',             icon: Dna,         href: '/lab/aria', group: 'Specialist agents', inGroup: true },
-      { title: 'Lyra',             icon: Dna,         href: '/lab/lyra', soon: true, inGroup: true },
       { title: 'Pipelines',        icon: GitBranch,   href: '/lab/pipelines', spaceBefore: true },
       { title: 'Computers',       icon: Zap,         href: '/lab/computers' },
       { title: 'Storage',          icon: HardDrive,   href: '/lab/agents/datasets' },
@@ -152,8 +151,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     }
   }, [location.pathname])
 
-  // "Specialist agents" group (Aria, Lyra): closed by default, opens when you are on one of its pages.
-  const inSpecialist = location.pathname.startsWith('/lab/aria') || location.pathname.startsWith('/lab/lyra')
+  // "Specialist agents" group (Aria): closed by default, opens when you are on one of its pages.
+  const inSpecialist = location.pathname.startsWith('/lab/aria')
   const [specOpen, setSpecOpen] = React.useState(inSpecialist)
   React.useEffect(() => { if (inSpecialist) setSpecOpen(true) }, [inSpecialist])
 
@@ -280,7 +279,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                         </div>
                         <div className="grid flex-1 text-left text-sm leading-tight">
                           <span className="truncate font-semibold">SynqLab</span>
-                          <span className="truncate text-xs text-sidebar-foreground/60">An AI lab for biology</span>
+                          <span className="text-[10px] leading-tight text-sidebar-foreground/60">Self-improving AI agents for biology</span>
                         </div>
                       </Link>
                     </SidebarMenuButton>
