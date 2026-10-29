@@ -1,15 +1,30 @@
-// Placeholder until the demos are recorded. Swap the inner block for an <iframe> (YouTube/Vimeo unlisted) or <video>.
+import { asset } from "../asset.js";
+
+// Plays a real video when `src` is given; otherwise shows the "demo coming" placeholder.
 // Record real screens only. Label replay or simulated data on screen.
-export default function VideoSlot({ title, length, note }) {
+export default function VideoSlot({ src, poster, title, length, note }) {
   return (
     <figure>
-      <div className="video" role="img" aria-label={`${title} video, coming soon`}>
-        <div>
-          <div className="play" />
-          <b>Demo coming</b>
-          <small>{length}</small>
+      {src ? (
+        <div className="video-player">
+          <video
+            src={asset(src)}
+            poster={poster ? asset(poster) : undefined}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={title}
+          />
         </div>
-      </div>
+      ) : (
+        <div className="video" role="img" aria-label={`${title} video, coming soon`}>
+          <div>
+            <div className="play" />
+            <b>Demo coming</b>
+            <small>{length}</small>
+          </div>
+        </div>
+      )}
       <figcaption className="vcap">
         <b>{title}</b>
         <span>{note}</span>

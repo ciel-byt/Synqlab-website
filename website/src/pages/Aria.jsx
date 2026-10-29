@@ -12,7 +12,7 @@ export default function Aria() {
       eyebrow="Product · Aria"
       title="AI that designs proteins."
       lead="Aria is a self-improving framework for protein design. It turns your own data into a private model, designs new proteins that do the jobs you ask for, checks them, and gets better with every round."
-      video={{ title: "Aria", length: "60–90 seconds", note: "A request and examples go in, checked candidates come out, then the model learns and tries again. In-silico." }}
+      video={{ src: "/video/aria.mp4", poster: "/video/aria-poster.jpg", title: "Aria", length: "About a minute", note: "A request and examples go in, checked candidates come out, then the model learns and tries again. In-silico." }}
     >
       <section className="soft">
         <div className="wrap">

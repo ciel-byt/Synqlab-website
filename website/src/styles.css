@@ -663,3 +663,7 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
   .stage-view, .stage-foot { width: 100%; }
   .stage-arrow { opacity: 1; }
 }
+
+/* Real video in a product hero. */
+.video-player { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 24px 60px -28px rgba(26, 43, 36, 0.38); }
+.video-player video { display: block; width: 100%; height: auto; }
