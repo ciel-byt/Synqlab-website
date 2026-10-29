@@ -598,15 +598,16 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 
 /* Hero stage: one real screen at a time, with arrows and numbers. Screenshot or recording. */
 .hero { overflow-x: clip; padding: 72px 0 64px; }
-.hero-split { grid-template-columns: minmax(280px, 0.6fr) 1.4fr; align-items: center; gap: clamp(28px, 3.5vw, 56px); }
-.hero-copy { max-width: 30rem; }
+.hero .wrap { max-width: 1600px; }
+.hero-split { grid-template-columns: minmax(300px, 0.68fr) 1.32fr; align-items: center; gap: clamp(28px, 3.5vw, 56px); }
+.hero-copy { max-width: 28rem; }
 .hero-copy h1 { max-width: 17ch; font-size: clamp(2rem, 3.4vw, 3.1rem); }
 .hero-copy .lead { margin: 24px 0 0; }
 
 .stage { display: grid; gap: 16px; }
 .stage-view {
   position: relative;
-  width: min(calc(100% + (100vw - var(--max)) / 2 + var(--gutter)), calc(100% + 24vw));
+  width: 100%;
   display: grid;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -642,7 +643,7 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 .stage-view:hover .stage-arrow, .stage-arrow:focus-visible { opacity: 1; }
 
 .stage-foot {
-  width: min(calc(100% + (100vw - var(--max)) / 2 + var(--gutter)), calc(100% + 24vw));
+  width: 100%;
   display: grid; justify-items: center; gap: 10px;
 }
 .stage-title { font-size: 0.95rem; color: var(--ink); font-weight: 500; }
