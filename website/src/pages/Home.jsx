@@ -28,8 +28,6 @@ export default function Home() {
         </div>
       </section>
 
-      <Marquee />
-
       <section className="soft">
         <div className="wrap">
           <div className="sec-head">
@@ -61,6 +59,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Marquee />
 
       <section>
         <div className="wrap">
