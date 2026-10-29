@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLink } from "../components/ui.jsx";
-import VideoSlot from "../components/VideoSlot.jsx";
+import AppStack from "../components/AppStack.jsx";
 import LoopDiagram from "../components/LoopDiagram.jsx";
 import StructureCompare from "../components/StructureCompare.jsx";
 import Marquee from "../components/Marquee.jsx";
@@ -18,13 +18,13 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="wrap hero-split reveal">
-          <div>
+          <div className="hero-copy">
             <h1>Self-improving AI agents for biology.</h1>
             <p className="lead">
               Aria, our first agent, designs proteins that don't exist in nature from your own data. Use it on its own, or on SynqLab, our agent platform.
             </p>
           </div>
-          <VideoSlot title="Aria in 90 seconds" length="About 90 seconds" note="Recorded from the real app once the demo is ready." />
+          <AppStack />
         </div>
       </section>
 
