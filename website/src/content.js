@@ -57,7 +57,7 @@ export const nav = [
     label: "Company",
     children: [
       { to: "/company", icon: "about", label: "About us", note: "Who we are and why" },
-      { to: "/company#team", icon: "team", label: "Our team", note: "The founders" },
+      { to: "/company#team", icon: "team", label: "Our team", note: "Founders and advisor" },
     ],
   },
 ];
@@ -174,4 +174,19 @@ export const posts = []; // Blog posts go here. Empty on purpose until there is 
 export const team = [
   { name: "Sepehr Bayat", role: "Co-founder", photo: asset("/team/sepehr.jpg"), pos: "36% 28%", zoom: 1.2, tx: "7%", ty: "9%", linkedin: "https://www.linkedin.com/in/sepehr-bayat-4369b98b/", scholar: "https://scholar.google.com/citations?hl=en&user=JUFknIcAAAAJ", bio: "PhD, Computer Science. Builds the AI systems." },
   { name: "Pouriya Bayat", role: "Co-founder", photo: asset("/team/pouriya.jpg"), pos: "52% 40%", zoom: 1.0, tx: "0%", ty: "0%", linkedin: "https://www.linkedin.com/in/pouriyabayat/", scholar: "https://scholar.google.com/citations?user=Lx8-mlMAAAAJ&hl=en", bio: "PhD, Pharmaceutical Sciences. Brings the biology and the bench." },
+];
+
+// Academic advisor. Name and title shown with her agreement; keep the title
+// exactly as the university states it. A photo shows once we have one on file;
+// until then the card uses her initials.
+export const advisors = [
+  {
+    name: "Mina Nouredanesh",
+    role: "Academic advisor",
+    photo: null,
+    affil: "Canada Research Chair in AI for Complex Health Data · Assistant Professor, University of Manitoba",
+    bio: "Works on AI for complex health data. Advises us on method and on how we evaluate what our models produce.",
+    linkedin: "https://www.linkedin.com/in/m-nouredanesh/",
+    scholar: "https://scholar.google.com/citations?hl=en&user=SPAtFGQAAAAJ",
+  },
 ];

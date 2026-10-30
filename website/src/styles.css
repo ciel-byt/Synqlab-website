@@ -668,6 +668,18 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 .video-player { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 24px 60px -28px rgba(26, 43, 36, 0.38); }
 .video-player video { display: block; width: 100%; height: auto; }
 
+/* Academic advisor: a row on a wide screen, a stack on a phone */
+.advisors { margin-top: 28px; display: grid; gap: 14px; }
+.advisor { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; padding: 26px 30px; }
+.advisor .avatar { width: 104px; height: 104px; flex: none; }
+.advisor-in { flex: 1 1 320px; display: grid; gap: 4px; }
+.advisor h3 { margin: 0; font-size: 1.35rem; }
+.advisor .affil { color: var(--brand); font-size: 0.9rem; }
+.advisor p { color: var(--ink-soft); }
+.advisor .plinks { margin: 0; flex: none; }
+.mono-av { display: grid; place-items: center; background: var(--brand-soft); }
+.mono-av span { font-family: var(--serif); font-size: 1.9rem; color: var(--brand); letter-spacing: 0.01em; }
+
 /* ---------------------------------------------------------------
    Phone and tablet.
    Kept last on purpose: several layout rules above are declared
@@ -702,6 +714,9 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 /* Phone */
 @media (max-width: 700px) {
   section { padding: 56px 0; }
+  .advisor { padding: 22px; gap: 18px; text-align: center; justify-content: center; }
+  .advisor-in { flex-basis: 100%; justify-items: center; }
+  .advisor .plinks { flex-basis: 100%; justify-content: center; }
   .sec-head { margin-bottom: 32px; }
   .explore, .grid-3, .grid-4, .fgrid { grid-template-columns: 1fr; }
   .fgrid { gap: 24px; }
