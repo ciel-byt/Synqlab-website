@@ -74,7 +74,7 @@ export default function Company() {
                   <div className="advisor-in">
                     <h3>{a.name}</h3>
                     <p className="affil">{a.affil}</p>
-                    <p>{a.bio}</p>
+                    {a.bio && <p>{a.bio}</p>}
                   </div>
                   <Links person={a} />
                 </div>

@@ -177,15 +177,14 @@ export const team = [
 ];
 
 // Academic advisor. Name and title shown with her agreement; keep the title
-// exactly as the university states it. A photo shows once we have one on file;
-// until then the card uses her initials.
+// exactly as the university states it. A card with no photo falls back to initials.
 export const advisors = [
   {
     name: "Mina Nouredanesh",
     role: "Academic advisor",
-    photo: null,
+    photo: asset("/team/mina.jpg"),
+    pos: "50% 30%", zoom: 1.0, tx: "0%", ty: "0%",
     affil: "Canada Research Chair in AI for Complex Health Data · Assistant Professor, University of Manitoba",
-    bio: "Works on AI for complex health data. Advises us on method and on how we evaluate what our models produce.",
     linkedin: "https://www.linkedin.com/in/m-nouredanesh/",
     scholar: "https://scholar.google.com/citations?hl=en&user=SPAtFGQAAAAJ",
   },
