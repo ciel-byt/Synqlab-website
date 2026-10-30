@@ -1,34 +1,39 @@
 import { SectionHead, Backers } from "../components/ui.jsx";
 import { team, advisors } from "../content.js";
+import { asset } from "../asset.js";
 
-// A portrait, or the person's initials until there is a photo on file.
-function Portrait({ person }) {
-  if (!person.photo) {
-    const initials = person.name.split(" ").map((w) => w[0]).join("");
-    return <div className="rost-ph rost-mono" aria-hidden="true"><span>{initials}</span></div>;
+// Initials stand in until there is a photo on file.
+function Avatar({ person }) {
+  if (person.photo) {
+    return (
+      <div className="avatar">
+        <img
+          src={person.photo}
+          alt={person.name}
+          style={{ transformOrigin: person.pos, "--zoom": person.zoom, "--tx": person.tx, "--ty": person.ty }}
+        />
+      </div>
+    );
   }
-  return (
-    <div className="rost-ph">
-      <img src={person.photo} alt={person.name} style={{ objectPosition: person.pos }} loading="lazy" />
-    </div>
-  );
+  const initials = person.name.split(" ").map((w) => w[0]).join("");
+  return <div className="avatar mono-av" aria-hidden="true"><span>{initials}</span></div>;
 }
 
 function Links({ person }) {
   if (!person.linkedin && !person.scholar) return null;
   return (
-    <p className="rost-links">
+    <div className="plinks">
       {person.linkedin && (
-        <a href={person.linkedin} target="_blank" rel="noopener noreferrer">
-          LinkedIn
+        <a href={person.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${person.name} on LinkedIn`} title="LinkedIn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="#0A66C2" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" /></svg>
         </a>
       )}
       {person.scholar && (
-        <a href={person.scholar} target="_blank" rel="noopener noreferrer">
-          Google Scholar
+        <a href={person.scholar} target="_blank" rel="noopener noreferrer" aria-label={`${person.name} on Google Scholar`} title="Google Scholar">
+          <img src={asset("/logos/googlescholar.svg")} alt="" width="22" height="22" />
         </a>
       )}
-    </p>
+    </div>
   );
 }
 
@@ -48,40 +53,33 @@ export default function Company() {
       <section id="team" style={{ paddingTop: 24 }}>
         <div className="wrap">
           <SectionHead title="Our team" />
-
-          <p className="eyebrow roster-label">Founders</p>
-          <div className="roster">
+          <div className="grid-2">
             {team.map((m) => (
-              <article className="rost" key={m.name}>
-                <Portrait person={m} />
-                <div className="rost-in">
-                  <h3>{m.name}</h3>
-                  <p className="role">{m.role}</p>
-                  {m.bio && <p className="rost-bio">{m.bio}</p>}
-                  <Links person={m} />
-                </div>
-              </article>
+              <div className="card person" key={m.name}>
+                <Avatar person={m} />
+                <h3>{m.name}</h3>
+                <p className="mono role" style={{ fontSize: "0.82rem", color: "var(--pine)" }}>{m.role}</p>
+                <p>{m.bio}</p>
+                <Links person={m} />
+              </div>
             ))}
           </div>
 
           {advisors.length > 0 && (
-            <>
-              <p className="eyebrow roster-label">
-                {advisors.length > 1 ? "Academic advisors" : "Academic advisor"}
-              </p>
-              <div className="roster adv">
-                {advisors.map((a) => (
-                  <article className="rost mini" key={a.name}>
-                    <Portrait person={a} />
-                    <div className="rost-in">
-                      <h3>{a.name}</h3>
-                      {a.affil && <p className="affil">{a.affil}</p>}
-                      <Links person={a} />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
+            <div className="advisors">
+              <p className="eyebrow">{advisors.length > 1 ? "Academic advisors" : "Academic advisor"}</p>
+              {advisors.map((a) => (
+                <div className="card advisor" key={a.name}>
+                  <Avatar person={a} />
+                  <div className="advisor-in">
+                    <h3>{a.name}</h3>
+                    <p className="affil">{a.affil}</p>
+                    {a.bio && <p>{a.bio}</p>}
+                  </div>
+                  <Links person={a} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
