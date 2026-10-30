@@ -668,17 +668,28 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 .video-player { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #000; box-shadow: 0 24px 60px -28px rgba(26, 43, 36, 0.38); }
 .video-player video { display: block; width: 100%; height: auto; }
 
-/* Academic advisor: a row on a wide screen, a stack on a phone */
-.advisors { margin-top: 28px; display: grid; gap: 14px; }
-.advisor { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; padding: 26px 30px; }
-.advisor .avatar { width: 104px; height: 104px; flex: none; }
-.advisor-in { flex: 1 1 320px; display: grid; gap: 4px; }
-.advisor h3 { margin: 0; font-size: 1.35rem; }
-.advisor .affil { color: var(--brand); font-size: 0.9rem; }
-.advisor p { color: var(--ink-soft); }
-.advisor .plinks { margin: 0; flex: none; }
-.mono-av { display: grid; place-items: center; background: var(--brand-soft); }
-.mono-av span { font-family: var(--serif); font-size: 1.9rem; color: var(--brand); letter-spacing: 0.01em; }
+/* Team roster: founders, then academic advisors in a smaller card.
+   Both rows use the same card so the section stays even as advisors are added. */
+.roster-label { margin: 0 0 14px; }
+.roster + .roster-label { margin-top: 44px; }
+.roster { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.roster.adv { grid-template-columns: repeat(3, 1fr); }
+.rost { display: grid; grid-template-columns: 176px 1fr; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
+.rost-ph { aspect-ratio: 4 / 5; background: var(--bg-soft); }
+.rost-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rost-mono { display: grid; place-items: center; }
+.rost-mono span { font-family: var(--serif); font-size: 1.9rem; color: var(--brand); }
+.rost-in { padding: 24px 26px; display: grid; align-content: center; gap: 7px; }
+.rost h3 { margin: 0; font-size: 1.3rem; }
+.rost .role { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.rost-bio { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+.rost .affil { margin: 0; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.45; }
+.rost-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 0; font-size: 0.85rem; }
+.rost-links a { color: var(--mute); border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.rost-links a:hover { color: var(--brand); border-color: var(--brand); }
+.rost.mini { grid-template-columns: 116px 1fr; }
+.rost.mini .rost-in { padding: 18px 20px; gap: 6px; }
+.rost.mini h3 { font-size: 1.12rem; }
 
 /* ---------------------------------------------------------------
    Phone and tablet.
@@ -693,6 +704,9 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 
 /* Tablet, landscape phone */
 @media (max-width: 1024px) {
+  .roster.adv { grid-template-columns: repeat(2, 1fr); }
+  .rost { grid-template-columns: 150px 1fr; }
+  .rost-in { padding: 20px; }
   .explore { grid-template-columns: 1fr 1fr; }
   .grid-3 { grid-template-columns: 1fr 1fr; }
   .proof-body { grid-template-columns: 1fr; }
@@ -714,9 +728,9 @@ a.agent-card:hover { border-color: var(--brand); transform: translateY(-2px); }
 /* Phone */
 @media (max-width: 700px) {
   section { padding: 56px 0; }
-  .advisor { padding: 22px; gap: 18px; text-align: center; justify-content: center; }
-  .advisor-in { flex-basis: 100%; justify-items: center; }
-  .advisor .plinks { flex-basis: 100%; justify-content: center; }
+  .roster, .roster.adv { grid-template-columns: 1fr; }
+  .rost, .rost.mini { grid-template-columns: 116px 1fr; }
+  .rost-in { padding: 16px 18px; }
   .sec-head { margin-bottom: 32px; }
   .explore, .grid-3, .grid-4, .fgrid { grid-template-columns: 1fr; }
   .fgrid { gap: 24px; }
