@@ -176,7 +176,7 @@ export const team = [
   { name: "Pouriya Bayat", role: "Co-founder", photo: asset("/team/pouriya.jpg"), pos: "52% 40%", zoom: 1.0, tx: "0%", ty: "0%", linkedin: "https://www.linkedin.com/in/pouriyabayat/", scholar: "https://scholar.google.com/citations?user=Lx8-mlMAAAAJ&hl=en", bio: "PhD, Pharmaceutical Sciences. Brings the biology and the bench." },
 ];
 
-// Academic advisor. Name and title shown with her agreement; keep the title
+// Academic advisors. Names and titles shown with their agreement; keep each title
 // exactly as the university states it. A card with no photo falls back to initials.
 export const advisors = [
   {
@@ -187,5 +187,14 @@ export const advisors = [
     affil: "Canada Research Chair in AI for Complex Health Data · Assistant Professor, University of Manitoba",
     linkedin: "https://www.linkedin.com/in/m-nouredanesh/",
     scholar: "https://scholar.google.com/citations?hl=en&user=SPAtFGQAAAAJ",
+  },
+  {
+    name: "Christopher Anand",
+    role: "Academic advisor",
+    photo: asset("/team/anand.jpg"),
+    pos: "50% 30%", zoom: 1.0, tx: "0%", ty: "0%",
+    affil: "Associate Professor, Computing and Software, McMaster University",
+    linkedin: "https://www.linkedin.com/in/christopheranand/",
+    scholar: "https://scholar.google.com/citations?user=4_cxY6oAAAAJ&hl=en",
   },
 ];
